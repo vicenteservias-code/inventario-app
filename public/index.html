@@ -1,689 +1,483 @@
 <!DOCTYPE html>
-<html lang="es">
+<html lang="fr">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
-<meta name="theme-color" content="#ffffff">
+<meta name="theme-color" content="#1a1a2e">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="default">
-<meta name="apple-mobile-web-app-title" content="Inventario">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="L'Atienda">
 <link rel="manifest" href="/manifest.json">
-<title>Inventario Restaurante</title>
+<title>L'Atienda — Inventaire</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@2.47.0/tabler-icons.min.css">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
-:root{--bg:#fff;--bg2:#f5f5f5;--bg3:#ebebeb;--txt:#111;--txt2:#666;--txt3:#999;--border:#e0e0e0;--border2:#ccc;--green:#16a34a;--blue:#2563eb;--yellow:#d97706;--red:#dc2626;--radius:8px;--radius-lg:12px}
-body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;font-size:15px;background:var(--bg);color:var(--txt);max-width:430px;margin:0 auto;min-height:100vh}
-.app{display:flex;flex-direction:column;min-height:100vh}
-.bnav{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:430px;display:flex;background:var(--bg);border-top:1px solid var(--border);z-index:100;padding-bottom:env(safe-area-inset-bottom)}
-.bnav-btn{flex:1;padding:10px 2px 8px;border:none;background:transparent;color:var(--txt2);cursor:pointer;font-size:10px;display:flex;flex-direction:column;align-items:center;gap:3px}
+:root{
+  --bg:#ffffff;--bg2:#f8f9fa;--bg3:#e9ecef;
+  --txt:#1a1a2e;--txt2:#6c757d;--txt3:#adb5bd;
+  --border:#dee2e6;--border2:#ced4da;
+  --green:#2d6a4f;--green-bg:#d8f3dc;
+  --red:#c1121f;--red-bg:#ffd7d7;
+  --blue:#1d3557;--blue-bg:#e8f4f8;
+  --orange:#e76f51;--orange-bg:#fdebd0;
+  --yellow:#f4a261;--yellow-bg:#fef3e2;
+  --primary:#1a1a2e;--primary-light:#e8e8f0;
+  --radius:10px;--radius-lg:16px;--radius-xl:20px;
+  --shadow:0 2px 8px rgba(0,0,0,0.08);
+}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;font-size:15px;background:var(--bg2);color:var(--txt);max-width:430px;margin:0 auto;min-height:100vh}
+.app{display:flex;flex-direction:column;min-height:100vh;background:var(--bg)}
+.topbar{background:var(--primary);color:#fff;padding:16px 16px 14px;display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;z-index:50}
+.topbar-title{font-size:20px;font-weight:700}
+.topbar-sub{font-size:12px;opacity:0.7;margin-top:1px}
+.topbar-right{display:flex;align-items:center;gap:8px}
+.sync-dot{width:8px;height:8px;border-radius:50%;background:#4caf50}
+.sync-dot.syncing{background:#ff9800;animation:pulse 1s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:0.4}}
+.bnav{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:430px;display:flex;background:var(--bg);border-top:1px solid var(--border);z-index:100;padding-bottom:env(safe-area-inset-bottom,0px)}
+.bnav-btn{flex:1;padding:10px 2px 8px;border:none;background:transparent;color:var(--txt2);cursor:pointer;font-size:10px;font-weight:500;display:flex;flex-direction:column;align-items:center;gap:3px}
 .bnav-btn i{font-size:22px}
-.bnav-btn.on{color:var(--txt)}
+.bnav-btn.on{color:var(--primary)}
 .content{flex:1;overflow-y:auto;padding-bottom:80px}
 .screen{display:none}
 .screen.on{display:block}
-.hdr{padding:16px 14px 10px;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--border);position:sticky;top:0;background:var(--bg);z-index:10}
-.hdr-title{font-size:16px;font-weight:600}
-.hdr-sub{font-size:12px;color:var(--txt2)}
 .stat-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:14px}
-.stat{background:var(--bg2);border-radius:var(--radius);padding:12px 14px}
-.stat-l{font-size:11px;color:var(--txt2);margin-bottom:3px}
-.stat-v{font-size:20px;font-weight:600}
+.stat{background:var(--bg);border-radius:var(--radius-lg);box-shadow:var(--shadow);padding:14px 16px}
+.stat-icon{width:36px;height:36px;border-radius:var(--radius);display:flex;align-items:center;justify-content:center;margin-bottom:8px;font-size:18px}
+.stat-l{font-size:11px;color:var(--txt2);font-weight:500;margin-bottom:3px;text-transform:uppercase}
+.stat-v{font-size:19px;font-weight:700}
 .stat-s{font-size:11px;color:var(--txt2);margin-top:2px}
-.sbar{padding:10px 14px 0}
-.sbar input{width:100%;padding:10px 12px;border-radius:var(--radius);border:1px solid var(--border2);background:var(--bg2);font-size:14px;color:var(--txt);outline:none}
-.sbar input:focus{border-color:var(--blue)}
-.cfilter{display:flex;gap:6px;padding:10px 14px 4px;overflow-x:auto;scrollbar-width:none}
-.cfilter::-webkit-scrollbar{display:none}
-.cpill{padding:6px 12px;border-radius:20px;font-size:12px;border:1px solid var(--border2);background:var(--bg);cursor:pointer;white-space:nowrap;color:var(--txt);flex-shrink:0}
-.cpill.on{background:var(--txt);color:var(--bg);border-color:transparent}
-.cat-hdr{padding:8px 14px;font-size:11px;font-weight:600;color:var(--txt2);text-transform:uppercase;letter-spacing:.05em;background:var(--bg2);border-top:1px solid var(--border);border-bottom:1px solid var(--border)}
-.prow{display:flex;align-items:center;gap:8px;padding:10px 14px;border-bottom:1px solid var(--border)}
+.sec-hdr{padding:10px 16px 6px;font-size:11px;font-weight:700;color:var(--txt2);text-transform:uppercase;background:var(--bg2);border-top:1px solid var(--border);border-bottom:1px solid var(--border)}
+.prow{display:flex;align-items:center;gap:10px;padding:11px 16px;border-bottom:1px solid var(--border);background:var(--bg)}
+.prow-icon{width:38px;height:38px;border-radius:var(--radius);background:var(--bg2);display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0}
 .pinfo{flex:1;min-width:0}
-.pname{font-size:13px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.pv{color:var(--txt2);font-size:11px}
+.pname{font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pvariant{color:var(--txt2);font-weight:400;font-size:12px}
 .pmeta{font-size:11px;color:var(--txt2);margin-top:2px}
-.pval{color:var(--green);font-weight:500}
+.pstock{font-size:13px;font-weight:700;color:var(--green);white-space:nowrap}
+.pstock.low{color:var(--orange)}
+.pstock.zero{color:var(--red)}
 .ctr{display:flex;align-items:center;gap:4px;flex-shrink:0}
-.cb{width:36px;height:36px;border-radius:50%;border:1px solid var(--border2);background:var(--bg);cursor:pointer;font-size:22px;display:flex;align-items:center;justify-content:center;color:var(--txt);user-select:none;-webkit-user-select:none}
-.cb:active{background:var(--bg2)}
-.cinput{width:52px;text-align:center;font-size:14px;font-weight:600;border:1px solid var(--border2);border-radius:var(--radius);padding:6px 2px;background:var(--bg);color:var(--txt)}
-.btn-main{display:block;width:calc(100% - 28px);margin:12px 14px;padding:14px;border-radius:var(--radius-lg);border:none;background:var(--txt);color:var(--bg);font-size:15px;font-weight:600;cursor:pointer;text-align:center}
-.btn-sec{background:transparent;border:1px solid var(--border2);color:var(--txt)}
-.btn-main:active{opacity:.8}
-.banner{margin:12px 14px;padding:12px 14px;border-radius:var(--radius);border:1px solid #fbbf24;background:#fffbeb;font-size:13px;color:#92400e}
-.hist-row{padding:14px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;cursor:pointer}
-.hist-row:active{background:var(--bg2)}
-.empty{padding:48px 14px;text-align:center;color:var(--txt2);font-size:14px}
-.sumrow{display:flex;justify-content:space-between;padding:10px 14px;border-bottom:1px solid var(--border);font-size:13px}
-.sumrow .lbl{color:var(--txt2)}
-.tabrow{display:flex;border-bottom:1px solid var(--border)}
-.tabrow button{flex:1;padding:11px 4px;font-size:13px;border:none;background:transparent;color:var(--txt2);cursor:pointer;border-bottom:2px solid transparent;font-weight:500}
-.tabrow button.on{color:var(--txt);border-bottom:2px solid var(--txt)}
-.prx-input{width:80px;text-align:right;font-size:13px;border:1px solid var(--border2);border-radius:var(--radius);padding:7px 8px;background:var(--bg);color:var(--txt)}
-.modified{color:var(--yellow)!important}
-.info-box{margin:0 14px 12px;padding:12px 14px;border-radius:var(--radius);background:#eff6ff;color:#1d4ed8;font-size:12px}
+.cb{width:36px;height:36px;border-radius:50%;border:1.5px solid var(--border2);background:var(--bg);cursor:pointer;font-size:20px;display:flex;align-items:center;justify-content:center;color:var(--txt);user-select:none}
+.cb.red{border-color:var(--red);color:var(--red)}
+.cb.green{border-color:var(--green);color:var(--green)}
+.cinput{width:52px;text-align:center;font-size:14px;font-weight:700;border:1.5px solid var(--border2);border-radius:var(--radius);padding:6px 2px;background:var(--bg);color:var(--txt)}
+.sbar{padding:10px 14px 6px;background:var(--bg);border-bottom:1px solid var(--border);position:sticky;top:0;z-index:20}
+.sinput{width:100%;padding:10px 12px 10px 36px;border-radius:var(--radius-lg);border:1.5px solid var(--border2);background:var(--bg2);font-size:14px;color:var(--txt);outline:none}
+.sbar-wrap{position:relative}
+.sbar-wrap i{position:absolute;left:10px;top:50%;transform:translateY(-50%);color:var(--txt2);font-size:18px}
+.cfilter{display:flex;gap:6px;padding:8px 14px;overflow-x:auto;scrollbar-width:none;background:var(--bg);border-bottom:1px solid var(--border)}
+.cfilter::-webkit-scrollbar{display:none}
+.cpill{padding:6px 12px;border-radius:20px;font-size:12px;font-weight:500;border:1.5px solid var(--border2);background:var(--bg);cursor:pointer;white-space:nowrap;color:var(--txt2);flex-shrink:0}
+.cpill.on{background:var(--primary);color:#fff;border-color:var(--primary)}
+.btn{display:flex;align-items:center;justify-content:center;gap:6px;width:calc(100% - 28px);margin:10px 14px;padding:14px;border-radius:var(--radius-lg);border:none;font-size:15px;font-weight:600;cursor:pointer}
+.btn-primary{background:var(--primary);color:#fff}
+.btn-green{background:var(--green);color:#fff}
+.btn-red{background:var(--red);color:#fff}
+.btn-outline{background:transparent;border:1.5px solid var(--border2);color:var(--txt)}
+.btn-sm{padding:8px 16px;font-size:13px;margin:0;width:auto;border-radius:var(--radius)}
+.banner{margin:12px 14px;padding:13px 16px;border-radius:var(--radius-lg);border-left:4px solid;font-size:13px}
+.banner-yellow{border-color:var(--yellow);background:var(--yellow-bg);color:#7d4e00}
+.banner-green{border-color:var(--green);background:var(--green-bg);color:var(--green)}
+.banner-blue{border-color:var(--blue);background:var(--blue-bg);color:var(--blue)}
+.hist-row{padding:14px 16px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;cursor:pointer}
+.sumrow{display:flex;justify-content:space-between;align-items:center;padding:10px 16px;border-bottom:1px solid var(--border);font-size:13px}
+.sumrow .lbl{color:var(--txt2);flex:1}
+.sumrow .val{font-weight:600;text-align:right}
+.tabrow{display:flex;background:var(--bg);border-bottom:1px solid var(--border)}
+.tabrow button{flex:1;padding:12px 8px;font-size:13px;font-weight:500;border:none;background:transparent;color:var(--txt2);cursor:pointer;border-bottom:2.5px solid transparent}
+.tabrow button.on{color:var(--primary);border-bottom-color:var(--primary);font-weight:700}
+.empty{padding:48px 20px;text-align:center;color:var(--txt2)}
+.empty i{font-size:48px;display:block;margin-bottom:12px;opacity:0.3}
+.empty-title{font-size:16px;font-weight:600;margin-bottom:6px}
+.empty-sub{font-size:13px}
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:200;display:flex;align-items:flex-end;justify-content:center}
+.modal{background:var(--bg);border-radius:20px 20px 0 0;width:100%;max-width:430px;padding:20px 16px 32px;animation:slideUp .25s ease}
+@keyframes slideUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
+.modal-title{font-size:17px;font-weight:700;margin-bottom:16px;text-align:center}
+.modal-handle{width:36px;height:4px;background:var(--border2);border-radius:2px;margin:0 auto 16px}
+.form-group{margin-bottom:14px}
+.form-label{font-size:12px;font-weight:600;color:var(--txt2);margin-bottom:5px;text-transform:uppercase}
+.form-input{width:100%;padding:11px 12px;border-radius:var(--radius);border:1.5px solid var(--border2);font-size:14px;color:var(--txt);background:var(--bg);outline:none}
+.loading{display:flex;align-items:center;justify-content:center;padding:40px;gap:10px;color:var(--txt2);font-size:14px}
+.spinner{width:20px;height:20px;border:2px solid var(--border2);border-top-color:var(--primary);border-radius:50%;animation:spin .6s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.tag-vente{background:#fdebd0;color:#e76f51;font-size:10px;padding:2px 6px;border-radius:20px;font-weight:600;margin-left:4px}
 </style>
 </head>
 <body>
 <div class="app">
 <div class="content">
-
 <div id="sc-home" class="screen on">
-  <div class="hdr"><span class="hdr-title">🇨🇴 Inventario</span><span class="hdr-sub" id="h-month">—</span></div>
-  <div class="stat-grid">
-    <div class="stat"><div class="stat-l">Valor stock actual</div><div class="stat-v" id="h-val">—</div><div class="stat-s" id="h-counted">Sin datos</div></div>
-    <div class="stat"><div class="stat-l">Compras del mes</div><div class="stat-v" id="h-purch">—</div><div class="stat-s" id="h-pmonth">—</div></div>
-    <div class="stat"><div class="stat-l">Consumo estimado</div><div class="stat-v" id="h-conso">—</div><div class="stat-s">vs mes anterior</div></div>
-    <div class="stat"><div class="stat-l">Productos activos</div><div class="stat-v" id="h-active">—</div><div class="stat-s" id="h-total">de 0</div></div>
+  <div class="topbar">
+    <div><div class="topbar-title">🏪 L'Atienda</div><div class="topbar-sub" id="h-date">—</div></div>
+    <div class="topbar-right"><div class="sync-dot" id="sync-dot"></div></div>
   </div>
-  <div id="h-banner" class="banner" style="display:none"><b>Conteo en progreso</b><br><span id="h-banner-txt"></span></div>
-  <button class="btn-main" id="btn-start" onclick="startCount()">Iniciar nuevo inventario</button>
-  <button class="btn-main btn-sec" onclick="nav('history')">Ver historial →</button>
+  <div class="stat-grid">
+    <div class="stat"><div class="stat-icon" style="background:#e8f5e9">📦</div><div class="stat-l">Valeur du stock</div><div class="stat-v" id="h-val">—</div><div class="stat-s" id="h-nb-prod">—</div></div>
+    <div class="stat"><div class="stat-icon" style="background:#fff3e0">🧾</div><div class="stat-l">Ventes aujourd'hui</div><div class="stat-v" id="h-ventes">—</div><div class="stat-s" id="h-ventes-nb">—</div></div>
+    <div class="stat"><div class="stat-icon" style="background:#e3f2fd">📈</div><div class="stat-l">Achats du mois</div><div class="stat-v" id="h-achats">—</div><div class="stat-s" id="h-achats-month">—</div></div>
+    <div class="stat"><div class="stat-icon" style="background:#fce4ec">📊</div><div class="stat-l">Consommation</div><div class="stat-v" id="h-conso">—</div><div class="stat-s">vs mois dernier</div></div>
+  </div>
+  <div id="h-banner" class="banner banner-yellow" style="display:none"><b>⏳ Comptage en cours</b><br><span id="h-banner-txt"></span></div>
+  <div style="padding:0 14px 6px;font-size:13px;font-weight:700;color:var(--txt2);text-transform:uppercase">Actions rapides</div>
+  <button class="btn btn-red" onclick="nav('ventes')">🧾 Clôturer les ventes du jour</button>
+  <button class="btn btn-primary" id="btn-start" onclick="startCount()">📋 Démarrer l'inventaire</button>
+  <button class="btn btn-outline" onclick="nav('history')">📅 Voir l'historique</button>
+</div>
+
+<div id="sc-ventes" class="screen">
+  <div class="topbar">
+    <div style="display:flex;align-items:center;gap:10px">
+      <button onclick="nav('home')" style="border:none;background:transparent;color:#fff;cursor:pointer;font-size:22px;padding:0">←</button>
+      <div><div class="topbar-title">Ventes du jour</div><div class="topbar-sub" id="v-date">—</div></div>
+    </div>
+    <span style="font-size:13px;font-weight:600;background:rgba(255,255,255,0.15);padding:4px 10px;border-radius:20px" id="v-total">0.00€</span>
+  </div>
+  <div class="banner banner-blue" style="margin-top:12px"><b>📦 Comment ça marche ?</b><br>Indiquez combien de chaque produit vous avez vendu. Le stock sera mis à jour automatiquement.</div>
+  <div class="sbar"><div class="sbar-wrap"><i class="ti ti-search"></i><input class="sinput" type="search" placeholder="Rechercher..." id="q-ventes" oninput="renderVentes()" autocomplete="off"></div></div>
+  <div id="list-ventes"></div>
+  <button class="btn btn-red" onclick="confirmerVentes()" style="margin-top:8px">✓ Confirmer les ventes</button>
+  <button class="btn btn-outline" onclick="nav('home')">Annuler</button>
+</div>
+
+<div id="sc-stock" class="screen">
+  <div class="topbar"><div class="topbar-title">Stock en temps réel</div><div class="topbar-right"><div class="sync-dot" id="sync-dot2"></div></div></div>
+  <div class="sbar"><div class="sbar-wrap"><i class="ti ti-search"></i><input class="sinput" type="search" placeholder="Rechercher..." id="q-stock" oninput="renderStock()" autocomplete="off"></div></div>
+  <div class="cfilter" id="cf-stock"></div>
+  <div id="list-stock"><div class="loading"><div class="spinner"></div> Chargement...</div></div>
+</div>
+
+<div id="sc-achats" class="screen">
+  <div class="topbar"><div class="topbar-title">Achats du mois</div><span style="font-size:13px;font-weight:600;background:rgba(255,255,255,0.15);padding:4px 10px;border-radius:20px" id="a-total">0.00€</span></div>
+  <div class="sbar"><div class="sbar-wrap"><i class="ti ti-search"></i><input class="sinput" type="search" placeholder="Rechercher..." id="q-achats" oninput="renderAchats()" autocomplete="off"></div></div>
+  <div class="cfilter" id="cf-achats"></div>
+  <div id="list-achats"></div>
+  <button class="btn btn-primary" onclick="saveAchats()" style="margin-top:8px">✓ Enregistrer les achats</button>
 </div>
 
 <div id="sc-count" class="screen">
-  <div class="hdr"><span class="hdr-title">Stock fin de mes</span><span class="hdr-sub" id="cnt-prog">0/0</span></div>
-  <div class="sbar"><input type="search" placeholder="Buscar producto..." id="q-count" oninput="renderList('count')" autocomplete="off"></div>
+  <div class="topbar">
+    <div style="display:flex;align-items:center;gap:10px">
+      <button onclick="nav('home')" style="border:none;background:transparent;color:#fff;cursor:pointer;font-size:22px;padding:0">←</button>
+      <div><div class="topbar-title">Comptage physique</div><div class="topbar-sub" id="cnt-prog">0/0 produits</div></div>
+    </div>
+  </div>
+  <div class="sbar"><div class="sbar-wrap"><i class="ti ti-search"></i><input class="sinput" type="search" placeholder="Rechercher..." id="q-count" oninput="renderCount()" autocomplete="off"></div></div>
   <div class="cfilter" id="cf-count"></div>
   <div id="list-count"></div>
-  <button class="btn-main" onclick="nav('review')" style="margin-top:10px">Ver resumen →</button>
+  <button class="btn btn-primary" onclick="nav('review')" style="margin-top:8px">→ Voir le résumé</button>
 </div>
 
-<div id="sc-purchases" class="screen">
-  <div class="hdr"><span class="hdr-title">Compras del mes</span><span class="hdr-sub" id="purch-total">Total: 0.00€</span></div>
-  <div class="sbar"><input type="search" placeholder="Buscar producto..." id="q-purch" oninput="renderList('purch')" autocomplete="off"></div>
-  <div class="cfilter" id="cf-purch"></div>
-  <div id="list-purch"></div>
+<div id="sc-review" class="screen">
+  <div class="topbar">
+    <div style="display:flex;align-items:center;gap:10px">
+      <button onclick="nav('count')" style="border:none;background:transparent;color:#fff;cursor:pointer;font-size:22px;padding:0">←</button>
+      <div class="topbar-title">Confirmer l'inventaire</div>
+    </div>
+  </div>
+  <div class="stat-grid" id="rev-stats"></div>
+  <div id="rev-list"></div>
+  <div class="banner banner-blue">ℹ️ En validant, le stock final devient le stock de départ du mois prochain.</div>
+  <button class="btn btn-green" onclick="saveInventory()">💾 Sauvegarder l'inventaire</button>
+  <button class="btn btn-outline" onclick="exportCurrent()">📊 Exporter en Excel</button>
+  <button class="btn btn-outline" onclick="nav('count')">← Continuer le comptage</button>
 </div>
 
-<div id="sc-prices" class="screen">
-  <div class="hdr"><span class="hdr-title">Precios unitarios</span><span class="hdr-sub">Toca el campo para editar</span></div>
-  <div class="sbar"><input type="search" placeholder="Buscar producto..." id="q-prices" oninput="renderList('prices')" autocomplete="off"></div>
-  <div class="cfilter" id="cf-prices"></div>
-  <div id="list-prices"></div>
+<div id="sc-produits" class="screen">
+  <div class="topbar"><div class="topbar-title">Produits</div><button onclick="showAddProduct()" style="border:none;background:rgba(255,255,255,0.15);color:#fff;cursor:pointer;font-size:13px;font-weight:600;padding:6px 12px;border-radius:20px">+ Ajouter</button></div>
+  <div class="sbar"><div class="sbar-wrap"><i class="ti ti-search"></i><input class="sinput" type="search" placeholder="Rechercher..." id="q-produits" oninput="renderProduits()" autocomplete="off"></div></div>
+  <div class="cfilter" id="cf-produits"></div>
+  <div id="list-produits"><div class="loading"><div class="spinner"></div> Chargement...</div></div>
 </div>
 
 <div id="sc-history" class="screen">
   <div id="hist-list-wrap">
-    <div class="hdr"><span class="hdr-title">Historial</span></div>
+    <div class="topbar"><div class="topbar-title">Historique</div></div>
     <div id="hist-list"></div>
   </div>
   <div id="hist-detail" style="display:none">
-    <div class="hdr">
-      <button onclick="closeDetail()" style="border:none;background:transparent;cursor:pointer;font-size:20px;padding:0 8px 0 0">←</button>
-      <span class="hdr-title" id="detail-title">Detalle</span>
-      <button onclick="exportDetail()" style="border:none;background:transparent;cursor:pointer;color:var(--blue);font-size:13px;font-weight:600">Excel ↓</button>
+    <div class="topbar">
+      <div style="display:flex;align-items:center;gap:10px">
+        <button onclick="closeDetail()" style="border:none;background:transparent;color:#fff;cursor:pointer;font-size:22px;padding:0">←</button>
+        <div class="topbar-title" id="detail-title">Détail</div>
+      </div>
+      <button onclick="exportDetail()" style="border:none;background:rgba(255,255,255,0.15);color:#fff;cursor:pointer;font-size:13px;font-weight:600;padding:6px 12px;border-radius:20px">📊 Excel</button>
     </div>
     <div class="tabrow">
-      <button class="on" onclick="detailTab('overview',this)">Resumen</button>
-      <button onclick="detailTab('detail',this)">Detalle</button>
-      <button onclick="detailTab('conso',this)">Consumo</button>
+      <button class="on" onclick="detailTab('overview',this)">Résumé</button>
+      <button onclick="detailTab('detail',this)">Détail</button>
+      <button onclick="detailTab('conso',this)">Consommation</button>
     </div>
     <div id="detail-content"></div>
-    <button class="btn-main" onclick="exportDetail()" style="margin-top:8px">Exportar a Excel ↓</button>
+    <button class="btn btn-outline" onclick="exportDetail()">📊 Exporter en Excel</button>
   </div>
 </div>
-
-<div id="sc-review" class="screen">
-  <div class="hdr">
-    <button onclick="nav('count')" style="border:none;background:transparent;cursor:pointer;font-size:20px;padding:0 8px 0 0">←</button>
-    <span class="hdr-title">Confirmar inventario</span>
-  </div>
-  <div class="stat-grid" id="rev-stats"></div>
-  <div id="rev-list"></div>
-  <div class="info-box">Al guardar, el stock final pasa a ser el stock inicial del próximo mes.</div>
-  <button class="btn-main" onclick="saveInventory()">✓ Guardar inventario</button>
-  <button class="btn-main btn-sec" onclick="exportCurrent()">Exportar a Excel ↓</button>
-  <button class="btn-main btn-sec" onclick="nav('count')">← Seguir contando</button>
 </div>
-
-</div><!-- end content -->
 
 <div class="bnav">
-  <button class="bnav-btn on" id="bnav-home" onclick="nav('home')"><i class="ti ti-home"></i>Inicio</button>
-  <button class="bnav-btn" id="bnav-count" onclick="nav('count')"><i class="ti ti-clipboard-list"></i>Contar</button>
-  <button class="bnav-btn" id="bnav-purchases" onclick="nav('purchases')"><i class="ti ti-shopping-cart"></i>Compras</button>
-  <button class="bnav-btn" id="bnav-prices" onclick="nav('prices')"><i class="ti ti-tag"></i>Precios</button>
-  <button class="bnav-btn" id="bnav-history" onclick="nav('history')"><i class="ti ti-chart-bar"></i>Historial</button>
-</div>
+  <button class="bnav-btn on" id="bnav-home" onclick="nav('home')"><i class="ti ti-home"></i>Accueil</button>
+  <button class="bnav-btn" id="bnav-stock" onclick="nav('stock')"><i class="ti ti-package"></i>Stock</button>
+  <button class="bnav-btn" id="bnav-achats" onclick="nav('achats')"><i class="ti ti-shopping-cart"></i>Achats</button>
+  <button class="bnav-btn" id="bnav-produits" onclick="nav('produits')"><i class="ti ti-tools"></i>Produits</button>
+  <button class="bnav-btn" id="bnav-history" onclick="nav('history')"><i class="ti ti-history"></i>Historique</button>
 </div>
 
+<div id="modal-product" class="modal-overlay" style="display:none" onclick="closeModal(event)">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title" id="modal-product-title">Nouveau produit</div>
+    <div class="form-group"><div class="form-label">Nom *</div><input class="form-input" id="p-name" placeholder="ex: Empanada bœuf" autocomplete="off"></div>
+    <div class="form-group"><div class="form-label">Variante</div><input class="form-input" id="p-variant" placeholder="ex: 250gr, 1L..."></div>
+    <div class="form-group"><div class="form-label">Catégorie *</div>
+      <select class="form-input" id="p-cat">
+        <option value="AMBIANT">AMBIANT</option>
+        <option value="FRAIS">FRAIS</option>
+        <option value="CONGELÉ">CONGELÉ</option>
+        <option value="HYGIÈNE">HYGIÈNE</option>
+        <option value="TRANSFORMÉS">TRANSFORMÉS</option>
+      </select>
+    </div>
+    <div class="form-group"><div class="form-label">Fournisseur</div><input class="form-input" id="p-sup" placeholder="ex: Impex, Metro..."></div>
+    <div class="form-group"><div class="form-label">Unité</div><input class="form-input" id="p-unit" placeholder="ex: unité, kg, L..."></div>
+    <div class="form-group"><div class="form-label">Prix unitaire (€) *</div><input class="form-input" id="p-price" type="number" min="0" step="0.01" placeholder="0.00"></div>
+    <div class="form-group" style="display:flex;align-items:center;gap:10px">
+      <input type="checkbox" id="p-vente" style="width:18px;height:18px;cursor:pointer">
+      <label for="p-vente" style="font-size:13px;font-weight:500;cursor:pointer">Produit vendu à la journée <span class="tag-vente">VENTE</span></label>
+    </div>
+    <button class="btn btn-primary" onclick="saveProduct()" id="btn-save-product">✓ Enregistrer</button>
+    <button class="btn btn-outline" onclick="document.getElementById('modal-product').style.display='none'">Annuler</button>
+  </div>
+</div>
+
+<div id="modal-confirm-ventes" class="modal-overlay" style="display:none">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title">Confirmer les ventes</div>
+    <div id="confirm-ventes-list"></div>
+    <div class="banner banner-yellow" style="margin:0 0 12px">⚠️ Cette action déduit les ventes du stock. Irréversible.</div>
+    <button class="btn btn-red" onclick="finaliserVentes()">✓ Confirmer et déduire du stock</button>
+    <button class="btn btn-outline" onclick="document.getElementById('modal-confirm-ventes').style.display='none'">Retour</button>
+  </div>
+</div>
+</div>
 <script>
-const BP=[
-{id:"A01",name:"Achiras del Huila",v:"50gr",cat:"AMBIANT",sup:"Impex",unit:"paquet",px:1.5083},
-{id:"A02",name:"Achiras del Huila",v:"120gr",cat:"AMBIANT",sup:"Impex",unit:"paquet",px:3.66},
-{id:"A03",name:"Ail semoule",v:"700gr",cat:"AMBIANT",sup:"Metro",unit:"kg",px:7.05},
-{id:"A04",name:"Barrilete",v:"",cat:"AMBIANT",sup:"Impex",unit:"unité",px:0.09425},
-{id:"A05",name:"Bocadillo rojo",v:"",cat:"AMBIANT",sup:"Impex",unit:"unité",px:0.103},
-{id:"A06",name:"Bocadillo veleño hoja",v:"",cat:"AMBIANT",sup:"Impex",unit:"unité",px:0.115},
-{id:"A07",name:"Bon Bon Bum Lulo",v:"",cat:"AMBIANT",sup:"Impex",unit:"unité",px:0.10708},
-{id:"A08",name:"Bon Bon Bum Tarro",v:"",cat:"AMBIANT",sup:"Impex",unit:"unité",px:0.1375},
-{id:"A09",name:"Brownie Ramo",v:"",cat:"AMBIANT",sup:"Impex",unit:"unité",px:1.2517},
-{id:"A10",name:"Buchette sucre",v:"",cat:"AMBIANT",sup:"Metro",unit:"paquet",px:17.53},
-{id:"A11",name:"Café Rioba Colombie",v:"1kg",cat:"AMBIANT",sup:"Metro",unit:"paquet",px:19},
-{id:"A12",name:"Cristal sucre de canne",v:"1kg",cat:"AMBIANT",sup:"Metro",unit:"unité",px:2.49},
-{id:"A13",name:"Chai latte",v:"",cat:"AMBIANT",sup:"Metro",unit:"unité",px:27.8},
-{id:"A14",name:"Chips platanitos",v:"",cat:"AMBIANT",sup:"Impex",unit:"paquet",px:0.9},
-{id:"A15",name:"Chocolat corona",v:"",cat:"AMBIANT",sup:"Impex",unit:"unité",px:3.18},
-{id:"A16",name:"Chocolat corona cannelle",v:"",cat:"AMBIANT",sup:"Impex",unit:"unité",px:3.15},
-{id:"A17",name:"Chocolatine Jet",v:"",cat:"AMBIANT",sup:"Impex",unit:"unité",px:0.324},
-{id:"A18",name:"Chocolatine Jumbo",v:"",cat:"AMBIANT",sup:"Impex",unit:"unité",px:2.6075},
-{id:"A19",name:"Chocoramo",v:"",cat:"AMBIANT",sup:"Impex",unit:"unité",px:1.16},
-{id:"A20",name:"Choclitos limón",v:"27gr",cat:"AMBIANT",sup:"Impex",unit:"unité",px:0.5983},
-{id:"A21",name:"Choclitos limón",v:"210gr",cat:"AMBIANT",sup:"Impex",unit:"unité",px:2.91},
-{id:"A22",name:"Club Colombia dorada",v:"",cat:"AMBIANT",sup:"Impex",unit:"unité",px:1.4},
-{id:"A23",name:"Cocosette",v:"",cat:"AMBIANT",sup:"Impex",unit:"unité",px:0.71667},
-{id:"A24",name:"Coffee Delight",v:"",cat:"AMBIANT",sup:"Impex",unit:"paquet",px:4.6},
-{id:"A25",name:"Crème coco Thai kitchen",v:"1L",cat:"AMBIANT",sup:"Metro",unit:"unité",px:5.15},
-{id:"A26",name:"Ducales",v:"",cat:"AMBIANT",sup:"Impex",unit:"unité",px:1.9},
-{id:"A27",name:"Farine PAN",v:"",cat:"AMBIANT",sup:"Impex",unit:"unité",px:2.08},
-{id:"A28",name:"Farine Colmaiz buñuelos",v:"",cat:"AMBIANT",sup:"Impex",unit:"unité",px:3.23},
-{id:"A29",name:"Farine Colmaiz pandebono",v:"",cat:"AMBIANT",sup:"Impex",unit:"unité",px:4.45},
-{id:"A30",name:"Farine Colmaiz pandeyuca",v:"",cat:"AMBIANT",sup:"Impex",unit:"unité",px:4.46},
-{id:"A31",name:"Festival chocolat",v:"",cat:"AMBIANT",sup:"Impex",unit:"unité",px:0.18417},
-{id:"A32",name:"Festival fraise",v:"",cat:"AMBIANT",sup:"Impex",unit:"unité",px:0.18417},
-{id:"A33",name:"Feuilles de laurier",v:"500gr",cat:"AMBIANT",sup:"Metro",unit:"paquet",px:10.57},
-{id:"A34",name:"Flips chocolat",v:"220gr",cat:"AMBIANT",sup:"Impex",unit:"unité",px:2.7},
-{id:"A35",name:"Guascas",v:"",cat:"AMBIANT",sup:"Impex",unit:"unité",px:1.83},
-{id:"A36",name:"Haricots rouges ROCH",v:"",cat:"AMBIANT",sup:"Metro",unit:"unité",px:1.35},
-{id:"A37",name:"Huile Olive",v:"5L",cat:"AMBIANT",sup:"Mercadona",unit:"unité",px:19.76},
-{id:"A38",name:"Huile végétale friture",v:"7.5L",cat:"AMBIANT",sup:"Sysco",unit:"L",px:3.85},
-{id:"A39",name:"Jus citron vert",v:"1L",cat:"AMBIANT",sup:"Metro",unit:"unité",px:2.99},
-{id:"A40",name:"Lentilles ROCH",v:"",cat:"AMBIANT",sup:"Metro",unit:"unité",px:1.167},
-{id:"A41",name:"Maïs jaune",v:"1kg",cat:"AMBIANT",sup:"Impex",unit:"kg",px:1.4124},
-{id:"A42",name:"Menta Helada colombina",v:"",cat:"AMBIANT",sup:"Impex",unit:"unité",px:0.0346},
-{id:"A43",name:"Miel de fleurs",v:"1kg",cat:"AMBIANT",sup:"Metro",unit:"unité",px:8.46},
-{id:"A44",name:"Milo",v:"220gr",cat:"AMBIANT",sup:"Impex",unit:"unité",px:5.1},
-{id:"A45",name:"Milo",v:"440gr",cat:"AMBIANT",sup:"Impex",unit:"unité",px:8.82},
-{id:"A46",name:"Natilla Arequipe",v:"",cat:"AMBIANT",sup:"Impex",unit:"unité",px:2.03},
-{id:"A47",name:"Natilla Coco",v:"",cat:"AMBIANT",sup:"Impex",unit:"unité",px:2.03},
-{id:"A48",name:"Natilla Panela",v:"",cat:"AMBIANT",sup:"Impex",unit:"unité",px:2.03},
-{id:"A49",name:"Panela Pulverizada",v:"500gr",cat:"AMBIANT",sup:"Impex",unit:"unité",px:1.5},
-{id:"A50",name:"Panela Pulverizada",v:"1kg",cat:"AMBIANT",sup:"Impex",unit:"unité",px:2.31},
-{id:"A51",name:"Paprika fumé",v:"",cat:"AMBIANT",sup:"Metro",unit:"unité",px:14.31},
-{id:"A52",name:"Pirulin chocolat",v:"66gr",cat:"AMBIANT",sup:"Impex",unit:"unité",px:1.43},
-{id:"A53",name:"Pirulin chocolat",v:"155gr",cat:"AMBIANT",sup:"Impex",unit:"unité",px:3.58},
-{id:"A54",name:"Pirulin chocolat",v:"300gr",cat:"AMBIANT",sup:"Impex",unit:"unité",px:5.72},
-{id:"A55",name:"Pois chiche ROCH",v:"",cat:"AMBIANT",sup:"Metro",unit:"unité",px:1.34},
-{id:"A56",name:"Poivre concassé",v:"530gr",cat:"AMBIANT",sup:"Metro",unit:"kg",px:22.358},
-{id:"A57",name:"Poivre noir",v:"500gr",cat:"AMBIANT",sup:"Metro",unit:"unité",px:11.39},
-{id:"A58",name:"Quipitos",v:"",cat:"AMBIANT",sup:"Impex",unit:"unité",px:0.30125},
-{id:"A59",name:"Riz Cambodge",v:"20kg",cat:"AMBIANT",sup:"Carrefour",unit:"kg",px:1.654},
-{id:"A60",name:"Saltin Fromage et beurre",v:"",cat:"AMBIANT",sup:"Impex",unit:"unité",px:2.2},
-{id:"A61",name:"Saltin Noël",v:"",cat:"AMBIANT",sup:"Impex",unit:"unité",px:1.97},
-{id:"A62",name:"Sauce ananas",v:"200gr",cat:"AMBIANT",sup:"Impex",unit:"unité",px:2.46},
-{id:"A63",name:"Sauce chili Sriracha",v:"730mL",cat:"AMBIANT",sup:"Metro",unit:"L",px:7.219},
-{id:"A64",name:"Sauce curry mango",v:"875mL",cat:"AMBIANT",sup:"Metro",unit:"L",px:8.743},
-{id:"A65",name:"Sauce Ketchup",v:"875mL",cat:"AMBIANT",sup:"Metro",unit:"L",px:4.594},
-{id:"A66",name:"Sauce Mayonnaise truffe",v:"875mL",cat:"AMBIANT",sup:"Metro",unit:"L",px:9.303},
-{id:"A67",name:"Sauce Smokey baconnaise",v:"875mL",cat:"AMBIANT",sup:"Metro",unit:"L",px:8.286},
-{id:"A68",name:"Sauce Sweet chili",v:"875mL",cat:"AMBIANT",sup:"Metro",unit:"L",px:8.583},
-{id:"A69",name:"Sel de mer fin",v:"5kg",cat:"AMBIANT",sup:"Metro",unit:"kg",px:0.706},
-{id:"A70",name:"Soupe Maggi Ajiaco",v:"",cat:"AMBIANT",sup:"Impex",unit:"unité",px:1.26},
-{id:"A71",name:"Soupe Maggi Sancocho",v:"",cat:"AMBIANT",sup:"Impex",unit:"unité",px:1.37},
-{id:"A72",name:"Supercoco bombon",v:"",cat:"AMBIANT",sup:"Impex",unit:"unité",px:0.11875},
-{id:"F01",name:"Aguila",v:"",cat:"FRAIS",sup:"Impex",unit:"unité",px:1.3},
-{id:"F02",name:"Arepa campesina fromage",v:"",cat:"FRAIS",sup:"Campesino",unit:"paquet",px:2.18},
-{id:"F03",name:"Arepa campesina fromage",v:"",cat:"FRAIS",sup:"Impex",unit:"paquet",px:2.7},
-{id:"F04",name:"Arepa mini",v:"",cat:"FRAIS",sup:"Campesino",unit:"unité",px:0.12917},
-{id:"F05",name:"Arepa mini",v:"",cat:"FRAIS",sup:"Impex",unit:"unité",px:0.15667},
-{id:"F06",name:"Arepa blanche",v:"",cat:"FRAIS",sup:"Campesino",unit:"paquet",px:1.49},
-{id:"F07",name:"Arepa blanche",v:"",cat:"FRAIS",sup:"Impex",unit:"paquet",px:1.8},
-{id:"F08",name:"Arepa yuca",v:"",cat:"FRAIS",sup:"Campesino",unit:"paquet",px:2.63},
-{id:"F09",name:"Avena alpina",v:"200mL",cat:"FRAIS",sup:"Impex",unit:"unité",px:0.867},
-{id:"F10",name:"Avena alpina",v:"1L",cat:"FRAIS",sup:"Impex",unit:"unité",px:3.22},
-{id:"F11",name:"Beurre moulé demi-sel",v:"250gr",cat:"FRAIS",sup:"Carrefour",unit:"unité",px:2.9},
-{id:"F12",name:"Boeuf effiloché",v:"500gr",cat:"FRAIS",sup:"Sysco",unit:"kg",px:19.9},
-{id:"F13",name:"Boeuf effiloché",v:"500gr",cat:"FRAIS",sup:"Metro",unit:"paquet",px:10.5},
-{id:"F14",name:"Boudin colombien",v:"",cat:"FRAIS",sup:"Mercadona",unit:"unité",px:1.77},
-{id:"F15",name:"Canard confit effiloché",v:"800gr",cat:"FRAIS",sup:"Sysco",unit:"unité",px:13.52},
-{id:"F16",name:"Chocolat corona",v:"",cat:"FRAIS",sup:"Impex",unit:"unité",px:3.18},
-{id:"F17",name:"Chocolat corona cannelle",v:"",cat:"FRAIS",sup:"Impex",unit:"unité",px:3.15},
-{id:"F18",name:"Chorizo sabrosito",v:"",cat:"FRAIS",sup:"Impex",unit:"paquet",px:4.93},
-{id:"F19",name:"Chorizo",v:"",cat:"FRAIS",sup:"Campesino",unit:"paquet",px:3.63},
-{id:"F20",name:"Club Colombia dorada",v:"",cat:"FRAIS",sup:"Impex",unit:"unité",px:1.4},
-{id:"F21",name:"Coca Cola",v:"33cl",cat:"FRAIS",sup:"Metro",unit:"unité",px:0.638},
-{id:"F22",name:"Coca Cola sans sucres",v:"33cl",cat:"FRAIS",sup:"Metro",unit:"unité",px:0.531},
-{id:"F23",name:"Cristalline",v:"50cl",cat:"FRAIS",sup:"Metro",unit:"unité",px:0.14625},
-{id:"F24",name:"Fromage Campesino",v:"300gr",cat:"FRAIS",sup:"Impex",unit:"unité",px:2.69},
-{id:"F25",name:"Fromage Campesino",v:"300gr",cat:"FRAIS",sup:"Campesino",unit:"unité",px:2.3},
-{id:"F26",name:"Fromage Campesino",v:"1kg",cat:"FRAIS",sup:"Impex",unit:"unité",px:6.1},
-{id:"F27",name:"Fromage Costeño",v:"300gr",cat:"FRAIS",sup:"Impex",unit:"unité",px:2.81},
-{id:"F28",name:"Fromage Costeño",v:"300gr",cat:"FRAIS",sup:"Campesino",unit:"unité",px:2.25},
-{id:"F29",name:"Fromage Costeño",v:"1kg",cat:"FRAIS",sup:"Impex",unit:"unité",px:8.2},
-{id:"F30",name:"FuzeTea Pêche",v:"33cl",cat:"FRAIS",sup:"Metro",unit:"unité",px:0.573},
-{id:"F31",name:"Guacamole",v:"475gr",cat:"FRAIS",sup:"Sysco",unit:"unité",px:8.88},
-{id:"F32",name:"Jus citron vert",v:"1L",cat:"FRAIS",sup:"Metro",unit:"unité",px:2.99},
-{id:"F33",name:"Lait pack",v:"1L",cat:"FRAIS",sup:"Mercadona",unit:"L",px:0.91},
-{id:"F34",name:"Oasis Tropical",v:"33cl",cat:"FRAIS",sup:"Metro",unit:"unité",px:0.556},
-{id:"F35",name:"Perrier",v:"33cl",cat:"FRAIS",sup:"Metro",unit:"unité",px:0.42167},
-{id:"F36",name:"Pilsen bière",v:"",cat:"FRAIS",sup:"Impex",unit:"unité",px:1.24},
-{id:"F37",name:"Poitrine porc crue",v:"5kg",cat:"FRAIS",sup:"Sysco",unit:"kg",px:7.25},
-{id:"F38",name:"Porc effiloché",v:"",cat:"FRAIS",sup:"Sysco",unit:"kg",px:12.82},
-{id:"F39",name:"Pony Malta",v:"",cat:"FRAIS",sup:"Impex",unit:"unité",px:1.05},
-{id:"F40",name:"Postobón Colombiana",v:"",cat:"FRAIS",sup:"Impex",unit:"unité",px:0.85},
-{id:"F41",name:"Postobón Manzana",v:"",cat:"FRAIS",sup:"Impex",unit:"unité",px:0.85},
-{id:"F42",name:"Postobón Uva",v:"",cat:"FRAIS",sup:"Impex",unit:"unité",px:0.85},
-{id:"F43",name:"Schweppes Agrumes",v:"33cl",cat:"FRAIS",sup:"Metro",unit:"unité",px:0.545},
-{id:"F44",name:"Filet poulet BLC HAL",v:"2.5kg",cat:"FRAIS",sup:"Metro",unit:"kg",px:8.148},
-{id:"F45",name:"Filet poulet jaune",v:"1.5kg",cat:"FRAIS",sup:"Metro",unit:"kg",px:8.847},
-{id:"F46",name:"Gras double",v:"3.1kg",cat:"FRAIS",sup:"Metro",unit:"kg",px:9.99},
-{id:"F47",name:"Poitrine de porc",v:"2.5kg",cat:"FRAIS",sup:"Metro",unit:"kg",px:7.81},
-{id:"F48",name:"Poulet cuisse",v:"",cat:"FRAIS",sup:"Metro",unit:"kg",px:7.789},
-{id:"F49",name:"Sauté porc cube",v:"2kg",cat:"FRAIS",sup:"Metro",unit:"kg",px:6.389},
-{id:"F50",name:"Cuisses de poulet",v:"",cat:"FRAIS",sup:"LIDL",unit:"kg",px:4.73},
-{id:"F51",name:"Filet mignon",v:"",cat:"FRAIS",sup:"LIDL",unit:"kg",px:11.55},
-{id:"F52",name:"Filet poulet",v:"1kg",cat:"FRAIS",sup:"LIDL",unit:"kg",px:9},
-{id:"F53",name:"Hauts cuisse poulet",v:"",cat:"FRAIS",sup:"LIDL",unit:"kg",px:4.26},
-{id:"F54",name:"Avocat gros",v:"",cat:"FRAIS",sup:"Grand Frais",unit:"unité",px:1.89},
-{id:"F55",name:"Banane plantain verte",v:"",cat:"FRAIS",sup:"Grand Frais",unit:"kg",px:2.37},
-{id:"F56",name:"Butternut",v:"",cat:"FRAIS",sup:"Grand Frais",unit:"unité",px:1.318},
-{id:"F57",name:"Cebette",v:"",cat:"FRAIS",sup:"Grand Frais",unit:"unité",px:1.422},
-{id:"F58",name:"Coriandre bouquet",v:"",cat:"FRAIS",sup:"Grand Frais",unit:"unité",px:0.8525},
-{id:"F59",name:"Maïs épi",v:"",cat:"FRAIS",sup:"Grand Frais",unit:"unité",px:1.185},
-{id:"F60",name:"Manioc",v:"",cat:"FRAIS",sup:"Grand Frais",unit:"kg",px:2.832},
-{id:"F61",name:"Oignon rouge",v:"",cat:"FRAIS",sup:"Grand Frais",unit:"kg",px:2.828},
-{id:"F62",name:"Pommes de terre purée",v:"",cat:"FRAIS",sup:"Grand Frais",unit:"kg",px:1.085},
-{id:"C01",name:"Almojabana",v:"",cat:"CONGELÉ",sup:"Impex",unit:"unité",px:0.955},
-{id:"C02",name:"Avocat demi 80gr",v:"5kg",cat:"CONGELÉ",sup:"Sysco",unit:"paquet",px:7.02},
-{id:"C03",name:"Beignets calamar",v:"",cat:"CONGELÉ",sup:"Metro",unit:"paquet",px:5.11},
-{id:"C04",name:"Beignets crevettes",v:"",cat:"CONGELÉ",sup:"Metro",unit:"paquet",px:17.06},
-{id:"C05",name:"Bouchées Tomate Mozz",v:"",cat:"CONGELÉ",sup:"Metro",unit:"paquet",px:15.16},
-{id:"C06",name:"Champignons émincés",v:"2.5kg",cat:"CONGELÉ",sup:"Metro",unit:"paquet",px:5.69},
-{id:"C07",name:"Chili Cheese Nuggets",v:"",cat:"CONGELÉ",sup:"Metro",unit:"paquet",px:10.38},
-{id:"C08",name:"Crispers McCain",v:"2.5kg",cat:"CONGELÉ",sup:"Metro",unit:"paquet",px:8.46},
-{id:"C09",name:"Crunchy petals McCain",v:"2.5kg",cat:"CONGELÉ",sup:"Metro",unit:"paquet",px:7.58},
-{id:"C10",name:"Empanada bœuf",v:"",cat:"CONGELÉ",sup:"Delizuchi",unit:"unité",px:0.8},
-{id:"C11",name:"Empanada poulet",v:"",cat:"CONGELÉ",sup:"Delizuchi",unit:"unité",px:0.8},
-{id:"C12",name:"Empanada lechona",v:"",cat:"CONGELÉ",sup:"Delizuchi",unit:"unité",px:1},
-{id:"C13",name:"Empanada fromage",v:"",cat:"CONGELÉ",sup:"Delizuchi",unit:"unité",px:0.55},
-{id:"C14",name:"Empanada cocktail",v:"",cat:"CONGELÉ",sup:"Delizuchi",unit:"unité",px:0.3636},
-{id:"C15",name:"Falafel 15gr",v:"1kg",cat:"CONGELÉ",sup:"Metro",unit:"paquet",px:11.29},
-{id:"C16",name:"Filet poulet Crunch Spicy",v:"1.05kg",cat:"CONGELÉ",sup:"Metro",unit:"paquet",px:11.19},
-{id:"C17",name:"Frites manioc",v:"",cat:"CONGELÉ",sup:"Impex",unit:"paquet",px:2.86},
-{id:"C18",name:"Glace Bourbon Vanille",v:"2.5kg",cat:"CONGELÉ",sup:"Sysco",unit:"paquet",px:15.73},
-{id:"C19",name:"Macédoine de légumes",v:"2.5kg",cat:"CONGELÉ",sup:"Metro",unit:"paquet",px:5.14},
-{id:"C20",name:"Oignons dés",v:"2.5kg",cat:"CONGELÉ",sup:"Metro",unit:"paquet",px:4.38},
-{id:"C21",name:"Papa criolla",v:"",cat:"CONGELÉ",sup:"Impex",unit:"paquet",px:2.83},
-{id:"C22",name:"Patacones",v:"",cat:"CONGELÉ",sup:"Impex",unit:"paquet",px:2.29},
-{id:"C23",name:"Printanière de légumes",v:"2.5kg",cat:"CONGELÉ",sup:"Metro",unit:"paquet",px:6.99},
-{id:"C24",name:"Pulpe guanabana",v:"90gr",cat:"CONGELÉ",sup:"Impex",unit:"unité",px:0.83},
-{id:"C25",name:"Pulpe guanabana",v:"250gr",cat:"CONGELÉ",sup:"Impex",unit:"unité",px:1.82},
-{id:"C26",name:"Pulpe lulo",v:"90gr",cat:"CONGELÉ",sup:"Impex",unit:"unité",px:0.61},
-{id:"C27",name:"Pulpe lulo",v:"250gr",cat:"CONGELÉ",sup:"Impex",unit:"unité",px:1.46},
-{id:"C28",name:"Pulpe passion",v:"90gr",cat:"CONGELÉ",sup:"Impex",unit:"unité",px:0.82},
-{id:"C29",name:"Pulpe passion",v:"250gr",cat:"CONGELÉ",sup:"Impex",unit:"unité",px:1.95},
-{id:"C30",name:"Pulpe mangue",v:"90gr",cat:"CONGELÉ",sup:"Impex",unit:"unité",px:0.55},
-{id:"C31",name:"Pulpe mangue",v:"250gr",cat:"CONGELÉ",sup:"Impex",unit:"unité",px:1.3},
-{id:"C32",name:"Pulpe mûre",v:"90gr",cat:"CONGELÉ",sup:"Impex",unit:"unité",px:0.61},
-{id:"C33",name:"Pulpe mûre",v:"250gr",cat:"CONGELÉ",sup:"Impex",unit:"unité",px:1.51},
-{id:"C34",name:"Pulpe ananas",v:"90gr",cat:"CONGELÉ",sup:"Impex",unit:"unité",px:0.52},
-{id:"C35",name:"Pulpe tomate de arbol",v:"90gr",cat:"CONGELÉ",sup:"Impex",unit:"unité",px:0.62},
-{id:"C36",name:"Pulpe tomate de arbol",v:"250gr",cat:"CONGELÉ",sup:"Impex",unit:"unité",px:1.4},
-{id:"C37",name:"Pulpe goyave",v:"90gr",cat:"CONGELÉ",sup:"Impex",unit:"unité",px:0.51},
-{id:"C38",name:"Pulpe goyave",v:"250gr",cat:"CONGELÉ",sup:"Impex",unit:"unité",px:1.3},
-{id:"C39",name:"Tequeños chocolat",v:"",cat:"CONGELÉ",sup:"Tequepop",unit:"unité",px:0.8},
-{id:"C40",name:"Tequeños fromage",v:"",cat:"CONGELÉ",sup:"Tequepop",unit:"unité",px:0.6},
-{id:"C41",name:"Tequeños fromage et goyave",v:"",cat:"CONGELÉ",sup:"Tequepop",unit:"unité",px:0.8},
-{id:"H01",name:"Air Wick désodorisant",v:"",cat:"HYGIÈNE",sup:"Amazon",unit:"unité",px:5},
-{id:"H02",name:"Barquette plastique 2 comp",v:"",cat:"HYGIÈNE",sup:"Metro",unit:"unité",px:0.608},
-{id:"H03",name:"Barquette pulpe 2 comp",v:"",cat:"HYGIÈNE",sup:"Metro",unit:"unité",px:0.239},
-{id:"H04",name:"Barquette pulpe 3 comp",v:"",cat:"HYGIÈNE",sup:"Metro",unit:"unité",px:0.371},
-{id:"H05",name:"Bobine mains blanc",v:"",cat:"HYGIÈNE",sup:"Hygitec",unit:"rouleau",px:2.5475},
-{id:"H06",name:"Boite carton kraft",v:"780mL",cat:"HYGIÈNE",sup:"Hygitec",unit:"unité",px:0.1638},
-{id:"H07",name:"Boite carton kraft",v:"1500mL",cat:"HYGIÈNE",sup:"Hygitec",unit:"unité",px:0.2642},
-{id:"H08",name:"Boite carton kraft",v:"2950mL",cat:"HYGIÈNE",sup:"Hygitec",unit:"unité",px:0.3755},
-{id:"H09",name:"Boite repas kraft",v:"1400mL",cat:"HYGIÈNE",sup:"Sysco",unit:"unité",px:0.1996},
-{id:"H10",name:"Bloc WC bleu 6 en 1",v:"",cat:"HYGIÈNE",sup:"Hygitec",unit:"unité",px:1.71},
-{id:"H11",name:"Capsell Dengrass Food",v:"50mL",cat:"HYGIÈNE",sup:"Hygitec",unit:"unité",px:3},
-{id:"H12",name:"Capsell CT Limp",v:"50mL",cat:"HYGIÈNE",sup:"Hygitec",unit:"unité",px:3},
-{id:"H13",name:"Capsell CT Sanit",v:"50mL",cat:"HYGIÈNE",sup:"Hygitec",unit:"unité",px:3},
-{id:"H14",name:"Couvercle gobelet Diam9",v:"",cat:"HYGIÈNE",sup:"Metro",unit:"unité",px:0.0494},
-{id:"H15",name:"Couvercle gobelet 24/30cl",v:"",cat:"HYGIÈNE",sup:"Hygitec",unit:"unité",px:0.0652},
-{id:"H16",name:"Couverts sachet 3 en 1",v:"",cat:"HYGIÈNE",sup:"Hygitec",unit:"unité",px:0.088},
-{id:"H17",name:"Dégraissant DENGRASS Four",v:"",cat:"HYGIÈNE",sup:"Hygitec",unit:"unité",px:5.3},
-{id:"H18",name:"Détartrant machine café",v:"",cat:"HYGIÈNE",sup:"Amazon",unit:"unité",px:7.385},
-{id:"H19",name:"Eponge bloc sdb",v:"",cat:"HYGIÈNE",sup:"Metro",unit:"unité",px:0.672},
-{id:"H20",name:"Essuie mains 2 plis",v:"",cat:"HYGIÈNE",sup:"Hygitec",unit:"rouleau",px:1.9267},
-{id:"H21",name:"Essuie-tout sopalin",v:"",cat:"HYGIÈNE",sup:"Metro",unit:"rouleau",px:0.979},
-{id:"H22",name:"Film plastique Wrap",v:"30cm",cat:"HYGIÈNE",sup:"Hygitec",unit:"unité",px:8.713},
-{id:"H23",name:"Film plastique Wrap",v:"45cm",cat:"HYGIÈNE",sup:"Hygitec",unit:"unité",px:12.153},
-{id:"H24",name:"Gant nitrile noir L",v:"",cat:"HYGIÈNE",sup:"Metro",unit:"paquet",px:8.84},
-{id:"H25",name:"Gant Nitrile noir S",v:"",cat:"HYGIÈNE",sup:"Hygitec",unit:"paquet",px:5.1},
-{id:"H26",name:"Gant Nitrile noir M",v:"",cat:"HYGIÈNE",sup:"Hygitec",unit:"paquet",px:5.1},
-{id:"H27",name:"Gant plonge Nitrile Vert",v:"",cat:"HYGIÈNE",sup:"Hygitec",unit:"unité",px:7.12},
-{id:"H28",name:"Glass produit vitre",v:"",cat:"HYGIÈNE",sup:"Hygitec",unit:"unité",px:3.1},
-{id:"H29",name:"Gobelet carton brun",v:"24cl",cat:"HYGIÈNE",sup:"Hygitec",unit:"unité",px:0.0502},
-{id:"H30",name:"Gobelet carton brun",v:"45/48cl",cat:"HYGIÈNE",sup:"Hygitec",unit:"unité",px:0.09582},
-{id:"H31",name:"Gobelet carton blanc",v:"50cl",cat:"HYGIÈNE",sup:"Promocash",unit:"unité",px:0.1612},
-{id:"H32",name:"Godet aluminium",v:"",cat:"HYGIÈNE",sup:"Hygitec",unit:"unité",px:0.0371},
-{id:"H33",name:"Lavage machine Green R",v:"5L",cat:"HYGIÈNE",sup:"Hygitec",unit:"unité",px:15.62},
-{id:"H34",name:"Lavette microfibre bleu",v:"38x38",cat:"HYGIÈNE",sup:"Hygitec",unit:"unité",px:1.108},
-{id:"H35",name:"Lavette microfibre noir",v:"",cat:"HYGIÈNE",sup:"Metro",unit:"unité",px:2.308},
-{id:"H36",name:"Lubrifiant machine café",v:"",cat:"HYGIÈNE",sup:"Amazon",unit:"unité",px:9.16},
-{id:"H37",name:"Masque chirurgical noir",v:"",cat:"HYGIÈNE",sup:"Hygitec",unit:"unité",px:0.1136},
-{id:"H38",name:"Nettoyant feutres Wproof",v:"500mL",cat:"HYGIÈNE",sup:"Metro",unit:"unité",px:8.69},
-{id:"H39",name:"Paille noire D6",v:"14cm",cat:"HYGIÈNE",sup:"Metro",unit:"paquet",px:2.58},
-{id:"H40",name:"Paille noire D6",v:"20cm",cat:"HYGIÈNE",sup:"Metro",unit:"paquet",px:6.1},
-{id:"H41",name:"Paille noire bio",v:"14cm",cat:"HYGIÈNE",sup:"Promocash",unit:"paquet",px:3.3},
-{id:"H42",name:"Paille noire bio",v:"20cm",cat:"HYGIÈNE",sup:"Promocash",unit:"paquet",px:3.35},
-{id:"H43",name:"Papier toilette mini",v:"",cat:"HYGIÈNE",sup:"Hygitec",unit:"rouleau",px:1.7083},
-{id:"H44",name:"Pastilles dégraissantes café",v:"",cat:"HYGIÈNE",sup:"Amazon",unit:"unité",px:8.49},
-{id:"H45",name:"Porte-gobelets par 4",v:"",cat:"HYGIÈNE",sup:"Metro",unit:"unité",px:0.2182},
-{id:"H46",name:"Pot à soupe kraft",v:"78cl",cat:"HYGIÈNE",sup:"Metro",unit:"unité",px:0.1378},
-{id:"H47",name:"Pot à soupe couvercle",v:"",cat:"HYGIÈNE",sup:"Metro",unit:"unité",px:0.1354},
-{id:"H48",name:"Pot sauces",v:"30mL",cat:"HYGIÈNE",sup:"Hygitec",unit:"paquet",px:3.27},
-{id:"H49",name:"Pot sauces couvercles",v:"30mL",cat:"HYGIÈNE",sup:"Hygitec",unit:"paquet",px:2.53},
-{id:"H50",name:"Ramequins",v:"85mL",cat:"HYGIÈNE",sup:"Metro",unit:"paquet",px:4.99},
-{id:"H51",name:"Recharge antihumidité",v:"",cat:"HYGIÈNE",sup:"Mercadona",unit:"unité",px:1.66},
-{id:"H52",name:"Rincage machine Brimel",v:"5L",cat:"HYGIÈNE",sup:"Hygitec",unit:"unité",px:17.72},
-{id:"H53",name:"Rouleaux TPE",v:"",cat:"HYGIÈNE",sup:"Metro",unit:"unité",px:0.602},
-{id:"H54",name:"Rouleaux papier caisse",v:"",cat:"HYGIÈNE",sup:"Metro",unit:"unité",px:0.602},
-{id:"H55",name:"Sac kraft brun avec anses",v:"",cat:"HYGIÈNE",sup:"Hygitec",unit:"unité",px:0.12144},
-{id:"H56",name:"Sac plastique 23x31",v:"",cat:"HYGIÈNE",sup:"Metro",unit:"unité",px:0.06955},
-{id:"H57",name:"Sacs poubelles poignées",v:"10L",cat:"HYGIÈNE",sup:"Amazon",unit:"unité",px:0.111},
-{id:"H58",name:"Sac Zip congélation",v:"1L",cat:"HYGIÈNE",sup:"Metro",unit:"unité",px:0.095},
-{id:"H59",name:"Sel régénérant lave-vaisselle",v:"1kg",cat:"HYGIÈNE",sup:"Metro",unit:"unité",px:0.87},
-{id:"H60",name:"Serviette Ouate 25x25",v:"blanc",cat:"HYGIÈNE",sup:"Hygitec",unit:"paquet",px:1.612},
-{id:"H61",name:"Spirale Inox 40gr",v:"",cat:"HYGIÈNE",sup:"Metro",unit:"unité",px:0.536},
-{id:"T01",name:"Buñuelos",v:"",cat:"TRANSFORMÉS",sup:"Maison",unit:"unité",px:0.12736},
-{id:"T02",name:"Chicharrón",v:"",cat:"TRANSFORMÉS",sup:"Maison",unit:"unité",px:0.435},
-{id:"T03",name:"Empanada Epinards Champis",v:"",cat:"TRANSFORMÉS",sup:"Maison",unit:"unité",px:0.19331},
-{id:"T04",name:"Pandebono",v:"",cat:"TRANSFORMÉS",sup:"Maison",unit:"unité",px:0.24643},
-{id:"T05",name:"Pandeyuca",v:"",cat:"TRANSFORMÉS",sup:"Maison",unit:"unité",px:0.16813},
-{id:"T06",name:"Pandeyuca con bocadillo",v:"",cat:"TRANSFORMÉS",sup:"Maison",unit:"unité",px:0.16836},
-{id:"T07",name:"Panier patacón",v:"",cat:"TRANSFORMÉS",sup:"Maison",unit:"unité",px:0.43}
-];
-
-const CATS=["AMBIANT","FRAIS","CONGELÉ","HYGIÈNE","TRANSFORMÉS"];
+const SUPA_URL='https://kiidashbpfayztublusf.supabase.co';
+const SUPA_KEY='sb_publishable_-nQQuqcF6R3spNqJ3eqvCA_jHuE_JY7';
+async function supaFetch(path,method='GET',body=null){
+  const opts={method,headers:{'Content-Type':'application/json','apikey':SUPA_KEY,'Authorization':'Bearer '+SUPA_KEY,'Prefer':method==='POST'?'return=representation':''}};
+  if(body)opts.body=JSON.stringify(body);
+  const r=await fetch(SUPA_URL+'/rest/v1/'+path,opts);
+  if(!r.ok){const e=await r.text();throw new Error(e);}
+  const t=await r.text();return t?JSON.parse(t):[];
+}
+const CATS=['AMBIANT','FRAIS','CONGELÉ','HYGIÈNE','TRANSFORMÉS'];
+const CI={AMBIANT:'📦',FRAIS:'🌿','CONGELÉ':'❄️','HYGIÈNE':'🧴','TRANSFORMÉS':'👨‍🍳'};
 const f2=n=>(+n||0).toFixed(2);
-const fE=n=>f2(n)+"€";
-const fM=s=>{if(!s)return"—";const[y,m]=s.split("-");return["Ene","Feb","Mar","Abr","May","Jun","Jul","Ago","Sep","Oct","Nov","Dic"][+m-1]+" "+y};
+const fE=n=>f2(n)+'€';
+const fM=s=>{if(!s)return'—';const[y,m]=s.split('-');return['Jan','Fév','Mar','Avr','Mai','Juin','Juil','Aoû','Sep','Oct','Nov','Déc'][+m-1]+' '+y;};
 const ym=()=>new Date().toISOString().slice(0,7);
-
-let ST={screen:"home",cat:"ALL",inventories:[],draft:null,prices:{},detailInv:null,detailTab:"overview"};
-let products=[...BP];
-
-function gpx(id){return ST.prices[id]??BP.find(p=>p.id===id)?.px??0;}
-
-function save(k,v){try{localStorage.setItem(k,JSON.stringify(v));}catch{}}
-function load(k){try{const v=localStorage.getItem(k);return v?JSON.parse(v):null;}catch{return null;}}
-
-function loadAll(){
-  const pr=load("r-prices"); if(pr){ST.prices=pr;products=BP.map(p=>({...p,px:gpx(p.id)}));}
-  const h=load("r-history"); if(h) ST.inventories=h;
-  const d=load("r-draft"); if(d) ST.draft=d;
-  render();
-}
-
-function spx(o){ST.prices=o;products=BP.map(p=>({...p,px:gpx(p.id)}));save("r-prices",o);}
-function sd(d){ST.draft=d;if(d)save("r-draft",d);else{try{localStorage.removeItem("r-draft");}catch{}}}
-function sh(l){ST.inventories=l;save("r-history",l);}
-
-function nav(s){ST.screen=s;ST.search="";ST.cat="ALL";if(s==="history")ST.detailInv=null;render();}
-
+const today=()=>new Date().toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long'});
+let ST={screen:'home',cat:'ALL',products:[],stock:{},draft:null,achats:{},ventesJour:{},inventories:[],detailInv:null,detailTab:'overview',editingProduct:null};
+function setSyncDot(s){document.querySelectorAll('.sync-dot').forEach(d=>d.className='sync-dot'+(s==='syncing'?' syncing':''));}
+async function loadProducts(){try{setSyncDot('syncing');ST.products=await supaFetch('products?active=eq.true&order=category,name');setSyncDot('ok');}catch(e){console.error(e);setSyncDot('ok');}}
+async function loadStock(){try{const mvts=await supaFetch('stock_movements?order=created_at.desc');const s={};ST.products.forEach(p=>s[p.id]=0);mvts.forEach(m=>{s[m.product_id]=(s[m.product_id]||0)+(+m.quantity);});ST.stock=s;}catch(e){console.error(e);}}
+async function loadInventories(){try{ST.inventories=await supaFetch('inventories?order=saved_at.desc');}catch(e){console.error(e);}}
+function loadLocal(){try{const d=localStorage.getItem('la-draft');if(d)ST.draft=JSON.parse(d);const a=localStorage.getItem('la-achats');if(a)ST.achats=JSON.parse(a);const v=localStorage.getItem('la-ventes');if(v){const vv=JSON.parse(v);if(vv.date===new Date().toISOString().slice(0,10))ST.ventesJour=vv.data||{};}}catch{}}
+function saveLocal(){try{if(ST.draft)localStorage.setItem('la-draft',JSON.stringify(ST.draft));else localStorage.removeItem('la-draft');localStorage.setItem('la-achats',JSON.stringify(ST.achats));localStorage.setItem('la-ventes',JSON.stringify({date:new Date().toISOString().slice(0,10),data:ST.ventesJour}));}catch{}}
+async function init(){loadLocal();await loadProducts();await loadStock();await loadInventories();render();}
+function nav(s){ST.screen=s;ST.cat='ALL';if(s==='history')ST.detailInv=null;render();}
 function render(){
-  document.querySelectorAll(".screen").forEach(e=>e.classList.remove("on"));
-  document.querySelectorAll(".bnav-btn").forEach(e=>e.classList.remove("on"));
-  const sid=ST.screen==="review"?"count":ST.screen;
-  document.getElementById("sc-"+ST.screen)?.classList.add("on");
-  document.getElementById("bnav-"+sid)?.classList.add("on");
+  document.querySelectorAll('.screen').forEach(e=>e.classList.remove('on'));
+  document.querySelectorAll('.bnav-btn').forEach(e=>e.classList.remove('on'));
+  const sid=['review','ventes'].includes(ST.screen)?'home':ST.screen;
+  document.getElementById('sc-'+ST.screen)?.classList.add('on');
+  document.getElementById('bnav-'+sid)?.classList.add('on');
+  document.getElementById('h-date').textContent=today();
+  document.getElementById('v-date').textContent=today();
   renderDash();
-  if(ST.screen==="count")renderList("count");
-  if(ST.screen==="purchases")renderList("purch");
-  if(ST.screen==="prices")renderList("prices");
-  if(ST.screen==="history")renderHistory();
-  if(ST.screen==="review")renderReview();
+  if(ST.screen==='stock')renderStock();
+  if(ST.screen==='achats')renderAchats();
+  if(ST.screen==='count')renderCount();
+  if(ST.screen==='review')renderReview();
+  if(ST.screen==='produits')renderProduits();
+  if(ST.screen==='history')renderHistory();
+  if(ST.screen==='ventes')renderVentes();
 }
-
 function renderDash(){
-  const d=ST.draft,last=ST.inventories[ST.inventories.length-1],src=d||last;
-  document.getElementById("h-total").textContent="de "+products.length;
-  if(src){
-    const val=products.reduce((s,p)=>s+(src.finalStock?.[p.id]||0)*p.px,0);
-    const pur=products.reduce((s,p)=>s+(src.purchases?.[p.id]||0)*p.px,0);
-    const cnt=products.filter(p=>(src.finalStock?.[p.id]||0)>0).length;
-    document.getElementById("h-val").textContent=fE(val);
-    document.getElementById("h-month").textContent=fM(src.month);
-    document.getElementById("h-counted").textContent=cnt+" contados";
-    document.getElementById("h-purch").textContent=fE(pur);
-    document.getElementById("h-pmonth").textContent=fM(src.month);
-    document.getElementById("h-active").textContent=cnt;
-    if(ST.inventories.length>1&&last){
-      const prev=ST.inventories[ST.inventories.length-(d?1:2)];
-      if(prev){const c=products.reduce((s,p)=>s+(prev.finalStock?.[p.id]||0)*p.px+(last.purchases?.[p.id]||0)*p.px-(last.finalStock?.[p.id]||0)*p.px,0);document.getElementById("h-conso").textContent=fE(Math.max(0,c));}
-      else document.getElementById("h-conso").textContent="—";
-    } else document.getElementById("h-conso").textContent="—";
-  } else {
-    ["h-val","h-purch","h-conso","h-active"].forEach(id=>document.getElementById(id).textContent="—");
-    document.getElementById("h-month").textContent="—";
-    document.getElementById("h-counted").textContent="Sin inventario";
-    document.getElementById("h-pmonth").textContent="—";
-  }
-  if(d){
-    document.getElementById("h-banner").style.display="block";
-    const cnt=products.filter(p=>(d.finalStock?.[p.id]||0)>0).length;
-    document.getElementById("h-banner-txt").textContent=`${fM(d.month)} — ${cnt} productos contados`;
-    document.getElementById("btn-start").textContent="Continuar inventario";
-  } else {
-    document.getElementById("h-banner").style.display="none";
-    document.getElementById("btn-start").textContent="Iniciar nuevo inventario";
-  }
+  const val=ST.products.reduce((s,p)=>s+(ST.stock[p.id]||0)*p.price,0);
+  const vv=ST.products.filter(p=>p.is_sale_item).reduce((s,p)=>s+(ST.ventesJour[p.id]||0)*p.price,0);
+  const vn=Object.values(ST.ventesJour).filter(v=>v>0).length;
+  const av=ST.products.reduce((s,p)=>s+(ST.achats[p.id]||0)*p.price,0);
+  document.getElementById('h-val').textContent=fE(val);
+  document.getElementById('h-nb-prod').textContent=ST.products.length+' produits actifs';
+  document.getElementById('h-ventes').textContent=fE(vv);
+  document.getElementById('h-ventes-nb').textContent=vn+' lignes';
+  document.getElementById('h-achats').textContent=fE(av);
+  document.getElementById('h-achats-month').textContent=fM(ym());
+  document.getElementById('h-conso').textContent='—';
+  const d=ST.draft;
+  if(d){document.getElementById('h-banner').style.display='block';const c=ST.products.filter(p=>(d.finalStock?.[p.id]||0)>0).length;document.getElementById('h-banner-txt').textContent=fM(d.month)+' — '+c+' produits comptés';document.getElementById('btn-start').textContent='📋 Continuer l\'inventaire';}
+  else{document.getElementById('h-banner').style.display='none';document.getElementById('btn-start').textContent='📋 Démarrer l\'inventaire';}
 }
-
+function buildCF(id,mode){
+  const el=document.getElementById(id);if(!el)return;el.innerHTML='';
+  const a=document.createElement('button');a.className='cpill'+(ST.cat==='ALL'?' on':'');a.textContent='Tous';
+  a.onclick=()=>{ST.cat='ALL';if(mode==='stock')renderStock();else if(mode==='achats')renderAchats();else if(mode==='count')renderCount();else renderProduits();};
+  el.appendChild(a);
+  CATS.forEach(c=>{const b=document.createElement('button');b.className='cpill'+(ST.cat===c?' on':'');b.textContent=CI[c]+' '+c;b.onclick=()=>{ST.cat=c;if(mode==='stock')renderStock();else if(mode==='achats')renderAchats();else if(mode==='count')renderCount();else renderProduits();};el.appendChild(b);});
+}
+function getVis(qid){const q=(document.getElementById(qid)?.value||'').toLowerCase();return ST.products.filter(p=>(ST.cat==='ALL'||p.category===ST.cat)&&(!q||p.name.toLowerCase().includes(q)||(p.variant||'').toLowerCase().includes(q)||p.supplier.toLowerCase().includes(q)));}
+function renderStock(){
+  buildCF('cf-stock','stock');const vis=getVis('q-stock');const grouped={};
+  vis.forEach(p=>{if(!grouped[p.category])grouped[p.category]=[];grouped[p.category].push(p);});
+  const el=document.getElementById('list-stock');el.innerHTML='';
+  if(!vis.length){el.innerHTML='<div class="empty"><div class="empty-title">Aucun produit</div></div>';return;}
+  Object.entries(grouped).forEach(([cat,prods])=>{
+    const h=document.createElement('div');h.className='sec-hdr';h.textContent=CI[cat]+' '+cat;el.appendChild(h);
+    prods.forEach(p=>{const s=ST.stock[p.id]||0;const row=document.createElement('div');row.className='prow';const cls=s<=0?'zero':s<5?'low':'';row.innerHTML=`<div class="prow-icon">${CI[p.category]}</div><div class="pinfo"><div class="pname">${p.name}${p.variant?` <span class="pvariant">${p.variant}</span>`:''} ${p.is_sale_item?'<span class="tag-vente">VENTE</span>':''}</div><div class="pmeta">${p.supplier} · ${p.unit} · ${f2(p.price)}€</div></div><div class="pstock ${cls}">${f2(s)} ${p.unit}</div>`;el.appendChild(row);});
+  });
+}
+function renderVentes(){
+  const prods=ST.products.filter(p=>p.is_sale_item);
+  const q=(document.getElementById('q-ventes')?.value||'').toLowerCase();
+  const vis=prods.filter(p=>!q||p.name.toLowerCase().includes(q));
+  const el=document.getElementById('list-ventes');el.innerHTML='';let total=0;
+  if(!vis.length){el.innerHTML='<div class="empty"><div class="empty-title">Aucun produit de vente</div><div class="empty-sub">Activez "Produit vendu à la journée" dans Produits</div></div>';return;}
+  vis.forEach(p=>{const qty=ST.ventesJour[p.id]||0;total+=qty*p.price;const row=document.createElement('div');row.className='prow';row.innerHTML=`<div class="prow-icon">${CI[p.category]}</div><div class="pinfo"><div class="pname">${p.name}${p.variant?` <span class="pvariant">${p.variant}</span>`:''}</div><div class="pmeta">Stock: ${f2(ST.stock[p.id]||0)} ${p.unit} · ${f2(p.price)}€${qty>0?` · <span style="color:var(--red);font-weight:700">−${fE(qty*p.price)}</span>`:''}</div></div><div class="ctr"><button class="cb red" onclick="adjV('${p.id}',-1)">−</button><input class="cinput" type="number" min="0" value="${qty}" onchange="setVente('${p.id}',this.value)"><button class="cb green" onclick="adjV('${p.id}',1)">+</button></div>`;el.appendChild(row);});
+  document.getElementById('v-total').textContent=fE(total);
+}
+function adjV(id,delta){ST.ventesJour[id]=Math.max(0,(ST.ventesJour[id]||0)+delta);saveLocal();renderVentes();}
+function setVente(id,val){ST.ventesJour[id]=Math.max(0,parseFloat(val)||0);saveLocal();}
+function confirmerVentes(){
+  const lines=ST.products.filter(p=>p.is_sale_item&&(ST.ventesJour[p.id]||0)>0);
+  if(!lines.length){alert('Aucune vente à confirmer.');return;}
+  const el=document.getElementById('confirm-ventes-list');el.innerHTML='';
+  lines.forEach(p=>{const qty=ST.ventesJour[p.id];const row=document.createElement('div');row.className='sumrow';row.innerHTML=`<span class="lbl">${p.name}${p.variant?' '+p.variant:''}</span><span class="val">−${qty} ${p.unit} · <span style="color:var(--red)">${fE(qty*p.price)}</span></span>`;el.appendChild(row);});
+  document.getElementById('modal-confirm-ventes').style.display='flex';
+}
+async function finaliserVentes(){
+  document.getElementById('modal-confirm-ventes').style.display='none';setSyncDot('syncing');
+  try{const lines=ST.products.filter(p=>p.is_sale_item&&(ST.ventesJour[p.id]||0)>0);
+  for(const p of lines){const qty=ST.ventesJour[p.id];await supaFetch('stock_movements','POST',{product_id:p.id,type:'vente',quantity:-qty,note:'Ventes du '+new Date().toLocaleDateString('fr-FR')});if(ST.stock[p.id]!==undefined)ST.stock[p.id]-=qty;}
+  ST.ventesJour={};saveLocal();setSyncDot('ok');nav('home');alert('✅ Ventes enregistrées ! Le stock a été mis à jour.');}
+  catch(e){setSyncDot('ok');alert('Erreur: '+e.message);}
+}
+function renderAchats(){
+  buildCF('cf-achats','achats');const vis=getVis('q-achats');const grouped={};
+  vis.forEach(p=>{if(!grouped[p.category])grouped[p.category]=[];grouped[p.category].push(p);});
+  const el=document.getElementById('list-achats');el.innerHTML='';
+  let total=ST.products.reduce((s,p)=>s+(ST.achats[p.id]||0)*p.price,0);
+  document.getElementById('a-total').textContent=fE(total);
+  Object.entries(grouped).forEach(([cat,prods])=>{
+    const h=document.createElement('div');h.className='sec-hdr';h.textContent=CI[cat]+' '+cat;el.appendChild(h);
+    prods.forEach(p=>{const qty=ST.achats[p.id]||0;const row=document.createElement('div');row.className='prow';row.innerHTML=`<div class="prow-icon">${CI[p.category]}</div><div class="pinfo"><div class="pname">${p.name}${p.variant?` <span class="pvariant">${p.variant}</span>`:''}</div><div class="pmeta">${p.supplier} · ${p.unit} · ${f2(p.price)}€${qty>0?` · <span style="color:var(--green);font-weight:700">${fE(qty*p.price)}</span>`:''}</div></div><div class="ctr"><button class="cb red" onclick="adjA('${p.id}',-1)">−</button><input class="cinput" type="number" min="0" value="${qty}" onchange="setAchat('${p.id}',this.value)"><button class="cb green" onclick="adjA('${p.id}',1)">+</button></div>`;el.appendChild(row);});
+  });
+}
+function adjA(id,delta){ST.achats[id]=Math.max(0,(ST.achats[id]||0)+delta);saveLocal();renderAchats();}
+function setAchat(id,val){ST.achats[id]=Math.max(0,parseFloat(val)||0);saveLocal();}
+async function saveAchats(){
+  const lines=ST.products.filter(p=>(ST.achats[p.id]||0)>0);
+  if(!lines.length){alert('Aucun achat à enregistrer.');return;}
+  setSyncDot('syncing');
+  try{for(const p of lines){const qty=ST.achats[p.id];await supaFetch('stock_movements','POST',{product_id:p.id,type:'achat',quantity:qty,note:'Achats '+fM(ym())});ST.stock[p.id]=(ST.stock[p.id]||0)+qty;}
+  ST.achats={};saveLocal();setSyncDot('ok');alert('✅ Achats enregistrés !');renderAchats();renderDash();}
+  catch(e){setSyncDot('ok');alert('Erreur: '+e.message);}
+}
 function startCount(){
-  if(ST.draft){nav("count");return;}
-  const last=ST.inventories[ST.inventories.length-1];
-  const init={},pur={},fin={};
-  BP.forEach(p=>{init[p.id]=last?.finalStock?.[p.id]??0;pur[p.id]=0;fin[p.id]=0;});
-  sd({id:Date.now(),month:ym(),label:fM(ym()),startedAt:new Date().toISOString(),debutStock:init,purchases:pur,finalStock:fin});
-  nav("count");
+  if(ST.draft){nav('count');return;}
+  const fin={},deb={},pur={};
+  ST.products.forEach(p=>{fin[p.id]=0;deb[p.id]=ST.stock[p.id]||0;pur[p.id]=ST.achats[p.id]||0;});
+  ST.draft={id:Date.now(),month:ym(),label:fM(ym()),startedAt:new Date().toISOString(),debutStock:deb,purchases:pur,finalStock:fin};
+  saveLocal();nav('count');
 }
-
-function getVis(mode){
-  const q=(document.getElementById("q-"+mode)?.value||"").toLowerCase();
-  return products.filter(p=>(ST.cat==="ALL"||p.cat===ST.cat)&&(!q||p.name.toLowerCase().includes(q)||(p.v||"").toLowerCase().includes(q)||p.sup.toLowerCase().includes(q)));
-}
-
-function buildCF(cid,mode){
-  const el=document.getElementById(cid);if(!el)return;el.innerHTML="";
-  const a=document.createElement("button");a.className="cpill"+(ST.cat==="ALL"?" on":"");a.textContent="Todos";a.onclick=()=>{ST.cat="ALL";renderList(mode);};el.appendChild(a);
-  CATS.forEach(c=>{const b=document.createElement("button");b.className="cpill"+(ST.cat===c?" on":"");b.textContent=c;b.onclick=()=>{ST.cat=c;renderList(mode);};el.appendChild(b);});
-}
-
-function renderList(mode){
-  if(mode==="count"){buildCF("cf-count","count");renderCountList();}
-  else if(mode==="purch"){buildCF("cf-purch","purch");renderPurchList();}
-  else{buildCF("cf-prices","prices");renderPriceList();}
-}
-
-function mkRow(p,d,type){
-  const key=type==="fin"?"finalStock":"purchases";
-  const val=(d[key][p.id]||0)*p.px;
-  const row=document.createElement("div");row.className="prow";
-  row.innerHTML=`<div class="pinfo"><div class="pname">${p.name}${p.v?` <span class="pv">${p.v}</span>`:""}</div><div class="pmeta">${p.sup} · ${p.unit} · ${f2(p.px)}€${val>0?` · <span class="pval">${fE(val)}</span>`:""}</div></div><div class="ctr"><button class="cb" onclick="adj('${p.id}',-1,'${type}')">−</button><input class="cinput" type="number" min="0" step="0.5" value="${f2(d[key][p.id]||0)}" onchange="setV('${p.id}',this.value,'${type}')"><button class="cb" onclick="adj('${p.id}',1,'${type}')">+</button></div>`;
-  return row;
-}
-
-function renderCountList(){
-  const d=ST.draft;if(!d){document.getElementById("list-count").innerHTML=`<div class="empty">Inicia un inventario primero</div>`;return;}
-  const vis=getVis("count");
-  const grouped={};vis.forEach(p=>{if(!grouped[p.cat])grouped[p.cat]=[];grouped[p.cat].push(p);});
-  let cnt=0;products.forEach(p=>{if((d.finalStock[p.id]||0)>0)cnt++;});
-  document.getElementById("cnt-prog").textContent=`${cnt}/${products.length}`;
-  const el=document.getElementById("list-count");el.innerHTML="";
+function renderCount(){
+  buildCF('cf-count','count');const d=ST.draft;
+  if(!d){document.getElementById('list-count').innerHTML='<div class="empty"><div class="empty-title">Démarrez un inventaire depuis l\'accueil</div></div>';return;}
+  const vis=getVis('q-count');const grouped={};
+  vis.forEach(p=>{if(!grouped[p.category])grouped[p.category]=[];grouped[p.category].push(p);});
+  let cnt=0;ST.products.forEach(p=>{if((d.finalStock[p.id]||0)>0)cnt++;});
+  document.getElementById('cnt-prog').textContent=cnt+'/'+ST.products.length+' produits';
+  const el=document.getElementById('list-count');el.innerHTML='';
   Object.entries(grouped).forEach(([cat,prods])=>{
-    const h=document.createElement("div");h.className="cat-hdr";h.textContent=cat;el.appendChild(h);
-    prods.forEach(p=>el.appendChild(mkRow(p,d,"fin")));
+    const h=document.createElement('div');h.className='sec-hdr';h.textContent=CI[cat]+' '+cat;el.appendChild(h);
+    prods.forEach(p=>{const qty=d.finalStock[p.id]||0;const val=qty*p.price;const row=document.createElement('div');row.className='prow';row.innerHTML=`<div class="prow-icon">${CI[p.category]}</div><div class="pinfo"><div class="pname">${p.name}${p.variant?` <span class="pvariant">${p.variant}</span>`:''}</div><div class="pmeta">${p.supplier} · ${p.unit} · ${f2(p.price)}€${val>0?` · <span style="color:var(--green);font-weight:700">${fE(val)}</span>`:''}</div></div><div class="ctr"><button class="cb red" onclick="adjC('${p.id}',-1)">−</button><input class="cinput" type="number" min="0" step="0.5" value="${f2(qty)}" onchange="setCount('${p.id}',this.value)"><button class="cb green" onclick="adjC('${p.id}',1)">+</button></div>`;el.appendChild(row);});
   });
-  if(!vis.length)el.innerHTML=`<div class="empty">Sin resultados</div>`;
 }
-
-function renderPurchList(){
-  const d=ST.draft;if(!d){document.getElementById("list-purch").innerHTML=`<div class="empty">Inicia un inventario primero</div>`;return;}
-  const vis=getVis("purch");
-  const grouped={};vis.forEach(p=>{if(!grouped[p.cat])grouped[p.cat]=[];grouped[p.cat].push(p);});
-  const total=products.reduce((s,p)=>s+(d.purchases[p.id]||0)*p.px,0);
-  document.getElementById("purch-total").textContent="Total: "+fE(total);
-  const el=document.getElementById("list-purch");el.innerHTML="";
-  Object.entries(grouped).forEach(([cat,prods])=>{
-    const h=document.createElement("div");h.className="cat-hdr";h.textContent=cat;el.appendChild(h);
-    prods.forEach(p=>el.appendChild(mkRow(p,d,"pur")));
-  });
-  if(!vis.length)el.innerHTML=`<div class="empty">Sin resultados</div>`;
-}
-
-function renderPriceList(){
-  const vis=getVis("prices");
-  const grouped={};vis.forEach(p=>{if(!grouped[p.cat])grouped[p.cat]=[];grouped[p.cat].push(p);});
-  const el=document.getElementById("list-prices");el.innerHTML="";
-  Object.entries(grouped).forEach(([cat,prods])=>{
-    const h=document.createElement("div");h.className="cat-hdr";h.textContent=cat;el.appendChild(h);
-    prods.forEach(p=>{
-      const mod=ST.prices[p.id]!==undefined;
-      const row=document.createElement("div");row.className="prow";
-      row.innerHTML=`<div class="pinfo"><div class="pname">${p.name}${p.v?` <span class="pv">${p.v}</span>`:""}</div><div class="pmeta ${mod?"modified":""}">${p.sup} · ${p.unit}${mod?" · Modificado":""}</div></div><div style="display:flex;align-items:center;gap:4px"><span style="font-size:13px;color:var(--txt2)">€</span><input class="prx-input" type="number" min="0" step="0.01" value="${f2(p.px)}" onchange="updatePx('${p.id}',this.value)"></div>`;
-      el.appendChild(row);
-    });
-  });
-  if(!vis.length)el.innerHTML=`<div class="empty">Sin resultados</div>`;
-}
-
-function adj(id,delta,type){
-  if(!ST.draft)return;
-  const key=type==="fin"?"finalStock":"purchases";
-  const cur=ST.draft[key][id]||0;
-  ST.draft[key][id]=Math.max(0,+(cur+delta).toFixed(2));
-  sd(ST.draft);
-  if(type==="fin")renderCountList();else renderPurchList();
-}
-
-function setV(id,val,type){
-  if(!ST.draft)return;
-  const key=type==="fin"?"finalStock":"purchases";
-  ST.draft[key][id]=Math.max(0,parseFloat(val)||0);
-  sd(ST.draft);
-}
-
-function updatePx(id,val){
-  const n=Math.max(0,parseFloat(val)||0);
-  const orig=BP.find(p=>p.id===id)?.px;
-  const o={...ST.prices};
-  if(Math.abs(n-orig)<0.0001)delete o[id];else o[id]=n;
-  spx(o);
-}
-
+function adjC(id,delta){if(!ST.draft)return;ST.draft.finalStock[id]=Math.max(0,+((ST.draft.finalStock[id]||0)+delta).toFixed(2));saveLocal();renderCount();}
+function setCount(id,val){if(!ST.draft)return;ST.draft.finalStock[id]=Math.max(0,parseFloat(val)||0);saveLocal();}
 function renderReview(){
   const d=ST.draft;if(!d)return;
-  const fin=products.reduce((s,p)=>s+(d.finalStock[p.id]||0)*p.px,0);
-  const pur=products.reduce((s,p)=>s+(d.purchases[p.id]||0)*p.px,0);
-  const deb=products.reduce((s,p)=>s+(d.debutStock[p.id]||0)*p.px,0);
+  const fin=ST.products.reduce((s,p)=>s+(d.finalStock[p.id]||0)*p.price,0);
+  const pur=ST.products.reduce((s,p)=>s+(d.purchases[p.id]||0)*p.price,0);
+  const deb=ST.products.reduce((s,p)=>s+(d.debutStock[p.id]||0)*p.price,0);
   const conso=Math.max(0,deb+pur-fin);
-  const cnt=products.filter(p=>(d.finalStock[p.id]||0)>0).length;
-  document.getElementById("rev-stats").innerHTML=`<div class="stat"><div class="stat-l">Stock fin de mes</div><div class="stat-v">${fE(fin)}</div></div><div class="stat"><div class="stat-l">Compras del mes</div><div class="stat-v">${fE(pur)}</div></div><div class="stat"><div class="stat-l">Consumo estimado</div><div class="stat-v">${fE(conso)}</div></div><div class="stat"><div class="stat-l">Productos contados</div><div class="stat-v">${cnt}</div></div>`;
-  const el=document.getElementById("rev-list");el.innerHTML="";
-  CATS.forEach(cat=>{
-    const prods=products.filter(p=>p.cat===cat&&((d.finalStock[p.id]||0)>0||(d.purchases[p.id]||0)>0));
-    if(!prods.length)return;
-    const h=document.createElement("div");h.className="cat-hdr";h.textContent=cat;el.appendChild(h);
-    prods.forEach(p=>{const row=document.createElement("div");row.className="sumrow";row.innerHTML=`<span class="lbl">${p.name}${p.v?" "+p.v:""}</span><span style="font-weight:600">${d.finalStock[p.id]||0} ${p.unit} · ${fE((d.finalStock[p.id]||0)*p.px)}</span>`;el.appendChild(row);});
+  const cnt=ST.products.filter(p=>(d.finalStock[p.id]||0)>0).length;
+  document.getElementById('rev-stats').innerHTML=`<div class="stat"><div class="stat-icon" style="background:#e8f5e9">📦</div><div class="stat-l">Stock fin de mois</div><div class="stat-v">${fE(fin)}</div></div><div class="stat"><div class="stat-icon" style="background:#fff3e0">🛒</div><div class="stat-l">Achats du mois</div><div class="stat-v">${fE(pur)}</div></div><div class="stat"><div class="stat-icon" style="background:#fce4ec">🔥</div><div class="stat-l">Consommation</div><div class="stat-v">${fE(conso)}</div></div><div class="stat"><div class="stat-icon" style="background:#e3f2fd">✅</div><div class="stat-l">Produits comptés</div><div class="stat-v">${cnt}</div></div>`;
+  const el=document.getElementById('rev-list');el.innerHTML='';
+  CATS.forEach(cat=>{const prods=ST.products.filter(p=>p.category===cat&&((d.finalStock[p.id]||0)>0||(d.purchases[p.id]||0)>0));if(!prods.length)return;const h=document.createElement('div');h.className='sec-hdr';h.textContent=CI[cat]+' '+cat;el.appendChild(h);prods.forEach(p=>{const row=document.createElement('div');row.className='sumrow';row.innerHTML=`<span class="lbl">${p.name}${p.variant?' '+p.variant:''}</span><span class="val">${d.finalStock[p.id]||0} ${p.unit} · ${fE((d.finalStock[p.id]||0)*p.price)}</span>`;el.appendChild(row);});});
+}
+async function saveInventory(){
+  if(!ST.draft)return;setSyncDot('syncing');
+  try{const inv={...ST.draft,savedAt:new Date().toISOString()};
+  await supaFetch('inventories','POST',{label:inv.label,month:inv.month,data:inv});
+  for(const p of ST.products){const ns=inv.finalStock[p.id]||0;await supaFetch('stock_movements?product_id=eq.'+p.id,'DELETE');if(ns>0)await supaFetch('stock_movements','POST',{product_id:p.id,type:'inventaire',quantity:ns,note:'Inventaire '+inv.label});ST.stock[p.id]=ns;}
+  ST.draft=null;ST.achats={};saveLocal();await loadInventories();setSyncDot('ok');nav('home');alert('✅ Inventaire sauvegardé !');}
+  catch(e){setSyncDot('ok');alert('Erreur: '+e.message);}
+}
+function renderProduits(){
+  buildCF('cf-produits','produits');const vis=getVis('q-produits');const grouped={};
+  vis.forEach(p=>{if(!grouped[p.category])grouped[p.category]=[];grouped[p.category].push(p);});
+  const el=document.getElementById('list-produits');el.innerHTML='';
+  if(!vis.length){el.innerHTML='<div class="empty"><div class="empty-title">Aucun produit</div><div class="empty-sub">Appuyez sur + Ajouter</div></div>';return;}
+  Object.entries(grouped).forEach(([cat,prods])=>{
+    const h=document.createElement('div');h.className='sec-hdr';h.textContent=CI[cat]+' '+cat+' ('+prods.length+')';el.appendChild(h);
+    prods.forEach(p=>{const row=document.createElement('div');row.className='prow';row.innerHTML=`<div class="prow-icon">${CI[p.category]}</div><div class="pinfo"><div class="pname">${p.name}${p.variant?` <span class="pvariant">${p.variant}</span>`:''} ${p.is_sale_item?'<span class="tag-vente">VENTE</span>':''}</div><div class="pmeta">${p.supplier} · ${p.unit} · <b>${f2(p.price)}€</b></div></div><div style="display:flex;gap:8px;flex-shrink:0"><button class="btn btn-outline btn-sm" onclick="editProduct('${p.id}')">✏️</button><button class="btn btn-outline btn-sm" style="color:var(--red);border-color:var(--red)" onclick="deleteProduct('${p.id}')">🗑️</button></div>`;el.appendChild(row);});
   });
 }
-
-function saveInventory(){
-  if(!ST.draft)return;
-  const saved={...ST.draft,savedAt:new Date().toISOString(),priceSnap:{...ST.prices}};
-  sh([...ST.inventories,saved]);
-  sd(null);
-  nav("home");
+function showAddProduct(){ST.editingProduct=null;document.getElementById('modal-product-title').textContent='Nouveau produit';document.getElementById('btn-save-product').textContent='✓ Enregistrer';['p-name','p-variant','p-sup'].forEach(id=>document.getElementById(id).value='');document.getElementById('p-cat').value='AMBIANT';document.getElementById('p-unit').value='unité';document.getElementById('p-price').value='';document.getElementById('p-vente').checked=false;document.getElementById('modal-product').style.display='flex';}
+function editProduct(id){const p=ST.products.find(x=>x.id===id);if(!p)return;ST.editingProduct=id;document.getElementById('modal-product-title').textContent='Modifier le produit';document.getElementById('btn-save-product').textContent='✓ Mettre à jour';document.getElementById('p-name').value=p.name;document.getElementById('p-variant').value=p.variant||'';document.getElementById('p-cat').value=p.category;document.getElementById('p-sup').value=p.supplier||'';document.getElementById('p-unit').value=p.unit||'unité';document.getElementById('p-price').value=p.price;document.getElementById('p-vente').checked=p.is_sale_item||false;document.getElementById('modal-product').style.display='flex';}
+async function saveProduct(){
+  const name=document.getElementById('p-name').value.trim();const price=parseFloat(document.getElementById('p-price').value)||0;
+  if(!name){alert('Le nom est obligatoire');return;}if(price<=0){alert('Le prix doit être > 0');return;}
+  const data={name,variant:document.getElementById('p-variant').value.trim(),category:document.getElementById('p-cat').value,supplier:document.getElementById('p-sup').value.trim(),unit:document.getElementById('p-unit').value.trim()||'unité',price,is_sale_item:document.getElementById('p-vente').checked,active:true};
+  setSyncDot('syncing');
+  try{if(ST.editingProduct){await supaFetch('products?id=eq.'+ST.editingProduct,'PATCH',data);const idx=ST.products.findIndex(p=>p.id===ST.editingProduct);if(idx>=0)ST.products[idx]={...ST.products[idx],...data};}
+  else{const id='P'+Date.now();const np=await supaFetch('products','POST',{...data,id});ST.products.push(np&&np[0]?np[0]:{...data,id});ST.stock[id]=0;}
+  document.getElementById('modal-product').style.display='none';setSyncDot('ok');renderProduits();renderDash();}
+  catch(e){setSyncDot('ok');alert('Erreur: '+e.message);}
 }
-
+async function deleteProduct(id){if(!confirm('Supprimer ce produit ?'))return;setSyncDot('syncing');try{await supaFetch('products?id=eq.'+id,'PATCH',{active:false});ST.products=ST.products.filter(p=>p.id!==id);setSyncDot('ok');renderProduits();renderDash();}catch(e){setSyncDot('ok');alert('Erreur: '+e.message);}}
+function closeModal(e){if(e.target===document.getElementById('modal-product'))document.getElementById('modal-product').style.display='none';}
 function renderHistory(){
-  const hw=document.getElementById("hist-list-wrap"),hd=document.getElementById("hist-detail");
-  if(ST.detailInv){hw.style.display="none";hd.style.display="block";renderDetailContent();}
-  else{
-    hw.style.display="block";hd.style.display="none";
-    const el=document.getElementById("hist-list");el.innerHTML="";
-    if(!ST.inventories.length){el.innerHTML=`<div class="empty">Sin inventarios guardados aún</div>`;return;}
-    [...ST.inventories].reverse().forEach((inv,i)=>{
-      const val=BP.reduce((s,p)=>s+(inv.finalStock?.[p.id]||0)*(inv.priceSnap?.[p.id]??ST.prices[p.id]??p.px),0);
-      const row=document.createElement("div");row.className="hist-row";
-      row.innerHTML=`<div><div style="font-weight:600;font-size:14px">${inv.label}</div><div style="font-size:12px;color:var(--txt2)">${new Date(inv.savedAt).toLocaleDateString("es-ES")}</div></div><div style="text-align:right"><div style="font-weight:600;font-size:14px">${fE(val)}</div><div style="font-size:12px;color:var(--txt2)">→</div></div>`;
-      const idx=ST.inventories.length-1-i;
-      row.onclick=()=>{ST.detailInv=ST.inventories[idx];ST.detailTab="overview";renderHistory();};
-      el.appendChild(row);
-    });
-  }
+  const hw=document.getElementById('hist-list-wrap'),hd=document.getElementById('hist-detail');
+  if(ST.detailInv){hw.style.display='none';hd.style.display='block';renderDetailContent();}
+  else{hw.style.display='block';hd.style.display='none';const el=document.getElementById('hist-list');el.innerHTML='';
+  if(!ST.inventories.length){el.innerHTML='<div class="empty"><div class="empty-title">Aucun inventaire sauvegardé</div></div>';return;}
+  ST.inventories.forEach(inv=>{const d=inv.data;const val=ST.products.reduce((s,p)=>s+(d.finalStock?.[p.id]||0)*p.price,0);const row=document.createElement('div');row.className='hist-row';row.innerHTML=`<div><div style="font-weight:700;font-size:15px">${inv.label}</div><div style="font-size:12px;color:var(--txt2)">${new Date(inv.saved_at).toLocaleDateString('fr-FR',{day:'numeric',month:'long',year:'numeric'})}</div></div><div style="text-align:right"><div style="font-weight:700;font-size:15px">${fE(val)}</div><div style="font-size:20px">›</div></div>`;row.onclick=()=>{ST.detailInv=inv;ST.detailTab='overview';renderHistory();};el.appendChild(row);});}
 }
-
 function closeDetail(){ST.detailInv=null;renderHistory();}
-
-function detailTab(tab,btn){
-  ST.detailTab=tab;
-  document.querySelectorAll(".tabrow button").forEach(b=>b.classList.remove("on"));
-  btn.classList.add("on");
-  renderDetailContent();
-}
-
-function prxI(inv,id){return inv.priceSnap?.[id]??ST.prices[id]??BP.find(p=>p.id===id)?.px??0;}
-
+function detailTab(tab,btn){ST.detailTab=tab;document.querySelectorAll('.tabrow button').forEach(b=>b.classList.remove('on'));btn.classList.add('on');renderDetailContent();}
 function renderDetailContent(){
-  const inv=ST.detailInv;if(!inv)return;
-  document.getElementById("detail-title").textContent=inv.label;
-  const el=document.getElementById("detail-content");el.innerHTML="";
-  if(ST.detailTab==="overview"){
-    const fin=BP.reduce((s,p)=>s+(inv.finalStock?.[p.id]||0)*prxI(inv,p.id),0);
-    const pur=BP.reduce((s,p)=>s+(inv.purchases?.[p.id]||0)*prxI(inv,p.id),0);
-    const deb=BP.reduce((s,p)=>s+(inv.debutStock?.[p.id]||0)*prxI(inv,p.id),0);
-    const conso=Math.max(0,deb+pur-fin);
-    el.innerHTML=`<div class="stat-grid"><div class="stat"><div class="stat-l">Stock inicio</div><div class="stat-v">${fE(deb)}</div></div><div class="stat"><div class="stat-l">Compras</div><div class="stat-v">${fE(pur)}</div></div><div class="stat"><div class="stat-l">Consumo</div><div class="stat-v">${fE(conso)}</div></div><div class="stat"><div class="stat-l">Stock final</div><div class="stat-v">${fE(fin)}</div></div></div>`;
-    CATS.forEach(cat=>{const v=BP.filter(p=>p.cat===cat).reduce((s,p)=>s+(inv.finalStock?.[p.id]||0)*prxI(inv,p.id),0);if(v>0){const row=document.createElement("div");row.className="sumrow";row.innerHTML=`<span class="lbl">${cat}</span><span style="font-weight:600">${fE(v)}</span>`;el.appendChild(row);}});
-  } else if(ST.detailTab==="detail"){
-    CATS.forEach(cat=>{
-      const prods=BP.filter(p=>p.cat===cat&&((inv.finalStock?.[p.id]||0)>0||(inv.purchases?.[p.id]||0)>0));
-      if(!prods.length)return;
-      const h=document.createElement("div");h.className="cat-hdr";h.textContent=cat;el.appendChild(h);
-      prods.forEach(p=>{const px=prxI(inv,p.id);const row=document.createElement("div");row.className="sumrow";row.innerHTML=`<span class="lbl">${p.name}${p.v?" "+p.v:""}<br><span style="font-size:10px">Compras: ${inv.purchases?.[p.id]||0}</span></span><span style="font-weight:600">${inv.finalStock?.[p.id]||0} ${p.unit}<br><span style="font-size:10px">${fE((inv.finalStock?.[p.id]||0)*px)}</span></span>`;el.appendChild(row);});
-    });
-    if(!el.children.length)el.innerHTML=`<div class="empty">Sin productos</div>`;
-  } else {
-    const idx=ST.inventories.indexOf(inv);
-    const prev=idx>0?ST.inventories[idx-1]:null;
-    if(!prev){el.innerHTML=`<div class="empty">Se necesitan 2 inventarios para ver consumo</div>`;return;}
-    let total=0;
-    CATS.forEach(cat=>{
-      const rows=BP.filter(p=>p.cat===cat).map(p=>{const px=prxI(inv,p.id),db=(prev.finalStock?.[p.id]||0),ac=(inv.purchases?.[p.id]||0),fn=(inv.finalStock?.[p.id]||0),c=db+ac-fn;return{p,c,val:c*px};}).filter(r=>Math.abs(r.c)>0.001);
-      if(!rows.length)return;
-      const h=document.createElement("div");h.className="cat-hdr";h.textContent=cat;el.appendChild(h);
-      rows.forEach(({p,c,val})=>{total+=val;const row=document.createElement("div");row.className="sumrow";row.innerHTML=`<span class="lbl">${p.name}${p.v?" "+p.v:""}</span><span style="font-weight:600;color:${val>=0?"var(--green)":"var(--red)"}">${f2(c)} ${p.unit} · ${fE(Math.abs(val))}</span>`;el.appendChild(row);});
-    });
-    if(el.children.length){const tot=document.createElement("div");tot.className="sumrow";tot.style.cssText="font-weight:600;background:var(--bg2)";tot.innerHTML=`<span>TOTAL CONSUMO</span><span>${fE(total)}</span>`;el.prepend(tot);}
-    else el.innerHTML=`<div class="empty">Sin consumo registrado</div>`;
-  }
+  const inv=ST.detailInv;if(!inv)return;const d=inv.data;document.getElementById('detail-title').textContent=inv.label;const el=document.getElementById('detail-content');el.innerHTML='';
+  if(ST.detailTab==='overview'){const fin=ST.products.reduce((s,p)=>s+(d.finalStock?.[p.id]||0)*p.price,0);const pur=ST.products.reduce((s,p)=>s+(d.purchases?.[p.id]||0)*p.price,0);const deb=ST.products.reduce((s,p)=>s+(d.debutStock?.[p.id]||0)*p.price,0);const conso=Math.max(0,deb+pur-fin);el.innerHTML=`<div class="stat-grid"><div class="stat"><div class="stat-l">Stock début</div><div class="stat-v">${fE(deb)}</div></div><div class="stat"><div class="stat-l">Achats</div><div class="stat-v">${fE(pur)}</div></div><div class="stat"><div class="stat-l">Consommation</div><div class="stat-v">${fE(conso)}</div></div><div class="stat"><div class="stat-l">Stock fin</div><div class="stat-v">${fE(fin)}</div></div></div>`;CATS.forEach(cat=>{const v=ST.products.filter(p=>p.category===cat).reduce((s,p)=>s+(d.finalStock?.[p.id]||0)*p.price,0);if(v>0){const row=document.createElement('div');row.className='sumrow';row.innerHTML=`<span class="lbl">${CI[cat]} ${cat}</span><span class="val">${fE(v)}</span>`;el.appendChild(row);}});}
+  else if(ST.detailTab==='detail'){CATS.forEach(cat=>{const prods=ST.products.filter(p=>p.category===cat&&((d.finalStock?.[p.id]||0)>0||(d.purchases?.[p.id]||0)>0));if(!prods.length)return;const h=document.createElement('div');h.className='sec-hdr';h.textContent=CI[cat]+' '+cat;el.appendChild(h);prods.forEach(p=>{const row=document.createElement('div');row.className='sumrow';row.innerHTML=`<span class="lbl">${p.name}${p.variant?' '+p.variant:''}<br><span style="font-size:10px">Achats: ${d.purchases?.[p.id]||0}</span></span><span class="val">${d.finalStock?.[p.id]||0} ${p.unit}<br><span style="font-size:10px">${fE((d.finalStock?.[p.id]||0)*p.price)}</span></span>`;el.appendChild(row);});});if(!el.children.length)el.innerHTML='<div class="empty">Aucun produit</div>';}
+  else{const idx=ST.inventories.indexOf(inv);const prev=ST.inventories[idx+1];if(!prev){el.innerHTML='<div class="empty"><div class="empty-title">2 inventaires nécessaires</div></div>';return;}const pd=prev.data;let total=0;CATS.forEach(cat=>{const rows=ST.products.filter(p=>p.category===cat).map(p=>{const db=(pd.finalStock?.[p.id]||0),ac=(d.purchases?.[p.id]||0),fn=(d.finalStock?.[p.id]||0),c=db+ac-fn;return{p,c,val:c*p.price};}).filter(r=>Math.abs(r.c)>0.001);if(!rows.length)return;const h=document.createElement('div');h.className='sec-hdr';h.textContent=CI[cat]+' '+cat;el.appendChild(h);rows.forEach(({p,c,val})=>{total+=val;const row=document.createElement('div');row.className='sumrow';row.innerHTML=`<span class="lbl">${p.name}${p.variant?' '+p.variant:''}</span><span class="val" style="color:${val>=0?'var(--green)':'var(--red)'}">${f2(c)} ${p.unit} · ${fE(Math.abs(val))}</span>`;el.appendChild(row);});});if(el.children.length){const tot=document.createElement('div');tot.className='sumrow';tot.style.cssText='font-weight:700;background:var(--bg2)';tot.innerHTML=`<span>TOTAL CONSOMMATION</span><span>${fE(total)}</span>`;el.prepend(tot);}else el.innerHTML='<div class="empty">Aucune consommation</div>';}
 }
-
-function doExport(inv){
-  const prx=id=>inv.priceSnap?.[id]??ST.prices[id]??BP.find(p=>p.id===id)?.px??0;
-  const rows=[["Catégorie","Produit","Variante","Fournisseur","Stock début","Achats","Stock fin","Unité","Prix unitaire (€)","Valeur stock fin (€)","Consommation","Valeur consommation (€)"]];
-  BP.forEach(p=>{const db=inv.debutStock?.[p.id]||0,ac=inv.purchases?.[p.id]||0,fn=inv.finalStock?.[p.id]||0,px=prx(p.id);rows.push([p.cat,p.name,p.v||"",p.sup,db,ac,fn,p.unit,+f2(px),+f2(fn*px),+f2(db+ac-fn),+f2((db+ac-fn)*px)]);});
-  const finT=BP.reduce((s,p)=>s+(inv.finalStock?.[p.id]||0)*prx(p.id),0);
-  const cT=BP.reduce((s,p)=>{const db=inv.debutStock?.[p.id]||0,ac=inv.purchases?.[p.id]||0,fn=inv.finalStock?.[p.id]||0;return s+(db+ac-fn)*prx(p.id);},0);
-  rows.push(["","","","TOTAL","","","","","",+f2(finT),"",+f2(cT)]);
-  const wb=XLSX.utils.book_new();
-  const ws=XLSX.utils.aoa_to_sheet(rows);
-  ws["!cols"]=[{wch:12},{wch:28},{wch:10},{wch:14},{wch:12},{wch:10},{wch:12},{wch:8},{wch:18},{wch:20},{wch:13},{wch:22}];
-  XLSX.utils.book_append_sheet(wb,ws,inv.label||"Inventaire");
-  XLSX.writeFile(wb,`Inventaire_${inv.month||"export"}.xlsx`);
+function doExport(invData,label){
+  const rows=[['Catégorie','Produit','Variante','Fournisseur','Stock début','Achats','Stock fin','Unité','Prix (€)','Valeur fin (€)','Consommation','Valeur conso (€)']];
+  ST.products.forEach(p=>{const db=invData.debutStock?.[p.id]||0,ac=invData.purchases?.[p.id]||0,fn=invData.finalStock?.[p.id]||0;rows.push([p.category,p.name,p.variant||'',p.supplier,db,ac,fn,p.unit,+f2(p.price),+f2(fn*p.price),+f2(db+ac-fn),+f2((db+ac-fn)*p.price)]);});
+  const finT=ST.products.reduce((s,p)=>s+(invData.finalStock?.[p.id]||0)*p.price,0);
+  const cT=ST.products.reduce((s,p)=>{const db=invData.debutStock?.[p.id]||0,ac=invData.purchases?.[p.id]||0,fn=invData.finalStock?.[p.id]||0;return s+(db+ac-fn)*p.price;},0);
+  rows.push(['','','','TOTAL','','','','','',+f2(finT),'',+f2(cT)]);
+  const wb=XLSX.utils.book_new();const ws=XLSX.utils.aoa_to_sheet(rows);XLSX.utils.book_append_sheet(wb,ws,label||'Inventaire');XLSX.writeFile(wb,'Inventaire_'+(label||'export')+'.xlsx');
 }
-
-function exportDetail(){if(ST.detailInv)doExport(ST.detailInv);}
-function exportCurrent(){if(ST.draft)doExport(ST.draft);}
-
-if('serviceWorker' in navigator){navigator.serviceWorker.register('/sw.js');}
-
-loadAll();
+function exportDetail(){if(ST.detailInv)doExport(ST.detailInv.data,ST.detailInv.label);}
+function exportCurrent(){if(ST.draft)doExport(ST.draft,ST.draft.label);}
+if('serviceWorker' in navigator)navigator.serviceWorker.register('/sw.js');
+init();
 </script>
 </body>
 </html>
+
