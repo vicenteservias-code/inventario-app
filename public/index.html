@@ -131,6 +131,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;f
     <div class="stat"><div class="stat-icon" style="background:#e3f2fd">📈</div><div class="stat-l">Achats du mois</div><div class="stat-v" id="h-achats">—</div><div class="stat-s" id="h-achats-month">—</div></div>
     <div class="stat"><div class="stat-icon" style="background:#fce4ec">📊</div><div class="stat-l">Consommation</div><div class="stat-v" id="h-conso">—</div><div class="stat-s">vs mois dernier</div></div>
   </div>
+<div id="h-alertes" class="banner banner-red" style="display:none;margin:12px 14px;padding:13px 16px;border-radius:var(--radius-lg)"></div>
   <div id="h-banner" class="banner banner-yellow" style="display:none"><b>⏳ Comptage en cours</b><br><span id="h-banner-txt"></span></div>
   <div style="padding:0 14px 6px;font-size:13px;font-weight:700;color:var(--txt2);text-transform:uppercase">Actions rapides</div>
   <button class="btn btn-orange" onclick="nav('photo')">📷 Scanner les ventes du jour</button>
@@ -400,6 +401,7 @@ function renderDash(){
   document.getElementById('h-achats').textContent=fE(av);
   document.getElementById('h-achats-month').textContent=fM(ym());
   document.getElementById('h-conso').textContent='—';
+renderAlertes();
   const d=ST.draft;
   if(d){
     document.getElementById('h-banner').style.display='block';
@@ -589,7 +591,25 @@ function buildCF(id,mode){
 }
 
 function getVis(qid){const q=(document.getElementById(qid)?.value||'').toLowerCase();return ST.products.filter(p=>(ST.cat==='ALL'||p.category===ST.cat)&&(!q||p.name.toLowerCase().includes(q)||(p.variant||'').toLowerCase().includes(q)||p.supplier.toLowerCase().includes(q)));}
-
+function renderAlertes(){
+  const LIMITES={
+    'C02':20,'C03':20,'C04':20,'C05':20,'C06':20,
+    'C08':15,'C09':15,'C07':15,'C01':10,
+    'C22':5,'C11':5,'C12':5,
+    'F03':5,'F02':5,'F04':5,'F08':5,
+    'F10':3,'F11':3,'F24':3,'F25':3,'F26':3,'F27':3,'F29':3,
+    'F15':24,'F21':24,'F22':24,'F23':24,'F17':24,'F18':24,'F19':24,'F20':24,
+    'A27':5,'A28':5,'A29':5,'A30':5,'A44':2,'A45':2,
+    'F18':5,'F19':5
+  };
+  const alertes=ST.products.filter(p=>LIMITES[p.id]!==undefined&&(ST.stock[p.id]||0)<=LIMITES[p.id]);
+  const el=document.getElementById('h-alertes');
+  if(!el)return;
+  if(!alertes.length){el.style.display='none';return;}
+  el.style.display='block';
+  el.innerHTML=`<div style="font-weight:700;margin-bottom:8px">🚨 Stock bas — commander bientôt</div>`+
+    alertes.map(p=>`<div style="display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid rgba(193,18,31,0.2)"><span>${p.name}${p.variant?' '+p.variant:''}</span><span style="font-weight:700">${f2(ST.stock[p.id]||0)} ${p.unit}</span></div>`).join('');
+}
 function renderStock(){
   buildCF('cf-stock','stock');const vis=getVis('q-stock');const grouped={};
   vis.forEach(p=>{if(!grouped[p.category])grouped[p.category]=[];grouped[p.category].push(p);});
