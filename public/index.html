@@ -530,7 +530,19 @@ async function saveAchats(){
 }
 
 function startCount(){
-  if(ST.draft){nav('count');return;}
+  if(ST.draft){
+    if(!confirm('⚠️ Un inventaire est déjà en cours ('+ST.draft.label+'). Voulez-vous le continuer ?')){
+      if(confirm('❌ Voulez-vous ANNULER et supprimer cet inventaire en cours ?')){
+        ST.draft=null;
+        saveLocal();
+        renderDash();
+        alert('✅ Inventaire annulé.');
+      }
+    } else {
+      nav('count');
+    }
+    return;
+  }
   const fin={},deb={},pur={};
   ST.products.forEach(p=>{fin[p.id]=0;deb[p.id]=ST.stock[p.id]||0;pur[p.id]=ST.achats[p.id]||0;});
   ST.draft={id:Date.now(),month:ym(),label:fM(ym()),startedAt:new Date().toISOString(),debutStock:deb,purchases:pur,finalStock:fin};
