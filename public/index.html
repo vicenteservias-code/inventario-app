@@ -801,7 +801,12 @@ function doExport(invData,label){
 }
 function exportDetail(){if(ST.detailInv)doExport(ST.detailInv.data,ST.detailInv.label);}
 function exportCurrent(){if(ST.draft)doExport(ST.draft,ST.draft.label);}
-
+setInterval(async()=>{
+  await supaFetchAll();
+  renderDash();
+  if(ST.screen==='stock')renderStock();
+  if(ST.screen==='journal')renderJournal();
+},30000);
 if('serviceWorker' in navigator)navigator.serviceWorker.register('/sw.js');
 init();
 </script>
