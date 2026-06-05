@@ -128,10 +128,10 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;f
   <div class="stat-grid">
     <div class="stat"><div class="stat-icon" style="background:#e8f5e9">📦</div><div class="stat-l">Valeur du stock</div><div class="stat-v" id="h-val">—</div><div class="stat-s" id="h-nb-prod">—</div></div>
     <div class="stat"><div class="stat-icon" style="background:#fff3e0">🧾</div><div class="stat-l">Ventes aujourd'hui</div><div class="stat-v" id="h-ventes">—</div><div class="stat-s" id="h-ventes-nb">—</div></div>
-    <div class="stat"><div class="stat-icon" style="background:#e3f2fd">📈</div><div class="stat-l">Achats du mois</div><div class="stat-v" id="h-achats">—</div><div class="stat-s" id="h-achats-month">—</div></div>
+    <div class="stat"><div class="stat-icon" style="background:#e3f2fd">📈</div><div cl	ass="stat-l">Achats du mois</div><div class="stat-v" id="h-achats">—</div><div class="stat-s" id="h-achats-month">—</div></div>
     <div class="stat"><div class="stat-icon" style="background:#fce4ec">📊</div><div class="stat-l">Consommation</div><div class="stat-v" id="h-conso">—</div><div class="stat-s">vs mois dernier</div></div>
   </div>
-<div id="h-alertes" class="banner banner-red" style="display:none;margin:12px 14px;padding:13px 16px;border-radius:var(--radius-lg)"></div>
+-lg)"></div>
   <div id="h-banner" class="banner banner-yellow" style="display:none"><b>⏳ Comptage en cours</b><br><span id="h-banner-txt"></span></div>
   <div style="padding:0 14px 6px;font-size:13px;font-weight:700;color:var(--txt2);text-transform:uppercase">Actions rapides</div>
   <button class="btn btn-orange" onclick="nav('photo')">📷 Scanner les ventes du jour</button>
@@ -233,6 +233,10 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;f
 </div>
 
 <div id="sc-history" class="screen">
+<div id="sc-journal" class="screen">
+  <div class="topbar"><div class="topbar-title">Journal des ventes</div></div>
+  <div id="journal-list"><div class="loading"><div class="spinner"></div> Chargement...</div></div>
+</div>
   <div id="hist-list-wrap">
     <div class="topbar"><div class="topbar-title">Historique</div></div>
     <div id="hist-list"></div>
@@ -262,6 +266,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;f
   <button class="bnav-btn" id="bnav-stock" onclick="nav('stock')"><i class="ti ti-package"></i>Stock</button>
   <button class="bnav-btn" id="bnav-achats" onclick="nav('achats')"><i class="ti ti-shopping-cart"></i>Achats</button>
   <button class="bnav-btn" id="bnav-produits" onclick="nav('produits')"><i class="ti ti-tools"></i>Produits</button>
+  <button class="bnav-btn" id="bnav-journal" onclick="nav('journal')"><i class="ti ti-calendar-stats"></i>Journal</button>
   <button class="bnav-btn" id="bnav-history" onclick="nav('history')"><i class="ti ti-history"></i>Historique</button>
 </div>
 
@@ -386,6 +391,7 @@ function render(){
   if(ST.screen==='review')renderReview();
   if(ST.screen==='produits')renderProduits();
   if(ST.screen==='history')renderHistory();
+if(ST.screen==='journal')renderJournal();
   if(ST.screen==='ventes')renderVentes();
 }
 
@@ -401,7 +407,7 @@ function renderDash(){
   document.getElementById('h-achats').textContent=fE(av);
   document.getElementById('h-achats-month').textContent=fM(ym());
   document.getElementById('h-conso').textContent='—';
-renderAlertes();
+
   const d=ST.draft;
   if(d){
     document.getElementById('h-banner').style.display='block';
@@ -591,25 +597,6 @@ function buildCF(id,mode){
 }
 
 function getVis(qid){const q=(document.getElementById(qid)?.value||'').toLowerCase();return ST.products.filter(p=>(ST.cat==='ALL'||p.category===ST.cat)&&(!q||p.name.toLowerCase().includes(q)||(p.variant||'').toLowerCase().includes(q)||p.supplier.toLowerCase().includes(q)));}
-function renderAlertes(){
-  const LIMITES={
-    'C02':20,'C03':20,'C04':20,'C05':20,'C06':20,
-    'C08':15,'C09':15,'C07':15,'C01':10,
-    'C22':5,'C11':5,'C12':5,
-    'F03':5,'F02':5,'F04':5,'F08':5,
-    'F10':3,'F11':3,'F24':3,'F25':3,'F26':3,'F27':3,'F29':3,
-    'F15':24,'F21':24,'F22':24,'F23':24,'F17':24,'F18':24,'F19':24,'F20':24,
-    'A27':5,'A28':5,'A29':5,'A30':5,'A44':2,'A45':2,
-    'F18':5,'F19':5
-  };
-  const alertes=ST.products.filter(p=>LIMITES[p.id]!==undefined&&(ST.stock[p.id]||0)<=LIMITES[p.id]);
-  const el=document.getElementById('h-alertes');
-  if(!el)return;
-  if(!alertes.length){el.style.display='none';return;}
-  el.style.display='block';
-  el.innerHTML=`<div style="font-weight:700;margin-bottom:8px">🚨 Stock bas — commander bientôt</div>`+
-    alertes.map(p=>`<div style="display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid rgba(193,18,31,0.2)"><span>${p.name}${p.variant?' '+p.variant:''}</span><span style="font-weight:700">${f2(ST.stock[p.id]||0)} ${p.unit}</span></div>`).join('');
-}
 function renderStock(){
   buildCF('cf-stock','stock');const vis=getVis('q-stock');const grouped={};
   vis.forEach(p=>{if(!grouped[p.category])grouped[p.category]=[];grouped[p.category].push(p);});
@@ -620,7 +607,6 @@ function renderStock(){
     prods.forEach(p=>{const s=ST.stock[p.id]||0;const row=document.createElement('div');row.className='prow';const cls=s<=0?'zero':s<5?'low':'';row.innerHTML=`<div class="prow-icon">${CI[p.category]}</div><div class="pinfo"><div class="pname">${p.name}${p.variant?` <span class="pvariant">${p.variant}</span>`:''} ${p.is_sale_item?'<span class="tag-vente">VENTE</span>':''}</div><div class="pmeta">${p.supplier} · ${p.unit} · ${f2(p.price)}€</div></div><div class="pstock ${cls}">${f2(s)} ${p.unit}</div>`;el.appendChild(row);});
   });
 }
-
 // ============ ACHATS ============
 function renderAchats(){
   buildCF('cf-achats','achats');const vis=getVis('q-achats');const grouped={};
@@ -728,6 +714,44 @@ async function deleteProduct(id){if(!confirm('Supprimer ce produit ?'))return;se
 function closeModal(e){if(e.target===document.getElementById('modal-product'))document.getElementById('modal-product').style.display='none';}
 
 // ============ HISTORIQUE ============
+async function renderJournal(){
+  const el=document.getElementById('journal-list');
+  el.innerHTML='<div class="loading"><div class="spinner"></div> Chargement...</div>';
+  try{
+    const mvts=await supaFetch('stock_movements?type=eq.vente&order=created_at.desc&limit=500');
+    if(!mvts.length){el.innerHTML='<div class="empty"><i class="ti ti-calendar-stats"></i><div class="empty-title">Aucune vente enregistrée</div><div class="empty-sub">Les ventes confirmées apparaîtront ici</div></div>';return;}
+    const byDay={};
+    mvts.forEach(m=>{
+      const day=m.created_at.slice(0,10);
+      if(!byDay[day])byDay[day]=[];
+      byDay[day].push(m);
+    });
+    el.innerHTML='';
+    Object.entries(byDay).sort((a,b)=>b[0].localeCompare(a[0])).forEach(([day,movements])=>{
+      const date=new Date(day);
+      const label=date.toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long'});
+      const totalVal=movements.reduce((s,m)=>{const p=ST.products.find(x=>x.id===m.product_id);return s+Math.abs(+m.quantity)*(p?.price||0);},0);
+      const hdr=document.createElement('div');
+      hdr.className='sec-hdr';
+      hdr.style.cssText='display:flex;justify-content:space-between;align-items:center';
+      hdr.innerHTML=`<span>${label}</span><span style="color:var(--red);font-weight:700">−${fE(totalVal)}</span>`;
+      el.appendChild(hdr);
+      const grouped={};
+      movements.forEach(m=>{
+        const key=m.product_id+(m.note||'');
+        if(!grouped[key]){grouped[key]={product_id:m.product_id,qty:0,note:m.note};}
+        grouped[key].qty+=Math.abs(+m.quantity);
+      });
+      Object.values(grouped).forEach(g=>{
+        const p=ST.products.find(x=>x.id===g.product_id);
+        if(!p)return;
+        const row=document.createElement('div');row.className='sumrow';
+        row.innerHTML=`<span class="lbl">${p.name}${p.variant?' '+p.variant:''}</span><span class="val">−${f2(g.qty)} ${p.unit} · <span style="color:var(--red)">${fE(g.qty*p.price)}</span></span>`;
+        el.appendChild(row);
+      });
+    });
+  }catch(e){el.innerHTML='<div class="empty"><div class="empty-title">Erreur de chargement</div></div>';console.error(e);}
+}
 function renderHistory(){
   const hw=document.getElementById('hist-list-wrap'),hd=document.getElementById('hist-detail');
   if(ST.detailInv){hw.style.display='none';hd.style.display='block';renderDetailContent();}
